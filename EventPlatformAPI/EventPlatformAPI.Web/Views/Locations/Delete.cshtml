@@ -1,0 +1,21 @@
+@model EventPlatformAPI.Web.ViewModels.Locations.LocationViewModel
+
+@{
+    ViewData["Title"] = "Brisanje lokacije";
+}
+
+<h1>Brisanje lokacije</h1>
+<h4>Da li ste sigurni?</h4>
+
+<dl class="row">
+    <dt class="col-sm-2">Naziv</dt>
+    <dd class="col-sm-10">@Model.Name</dd>
+    <dt class="col-sm-2">Adresa</dt>
+    <dd class="col-sm-10">@Model.Address</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Obriši</button>
+    <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+</form>

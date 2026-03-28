@@ -1,0 +1,23 @@
+﻿@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
+
+@{
+    ViewData["Title"] = "Brisanje termina predavača";
+}
+
+<h1>Brisanje termina predavača</h1>
+<h4>Da li ste sigurni?</h4>
+
+<dl class="row">
+    <dt class="col-sm-3">Događaj</dt>
+    <dd class="col-sm-9">@Model.EventName</dd>
+    <dt class="col-sm-3">Predava?</dt>
+    <dd class="col-sm-9">@Model.LecturerFullName</dd>
+    <dt class="col-sm-3">Termin</dt>
+    <dd class="col-sm-9">@Model.DateTime.ToString("dd.MM.yyyy HH:mm")</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Obriši</button>
+    <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+</form>

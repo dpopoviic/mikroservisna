@@ -1,0 +1,41 @@
+﻿@model IEnumerable<EventPlatformAPI.Web.ViewModels.Events.EventViewModel>
+
+@{
+    ViewData["Title"] = "Događaji";
+}
+
+<h1>Doga?aji</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Novi događaj</a>
+</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Naziv</th>
+            <th>Datum i vreme</th>
+            <th>Trajanje (h)</th>
+            <th>Cena (din)</th>
+            <th>Tip</th>
+            <th>Lokacija</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Name</td>
+            <td>@item.DateTime.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@item.DurationInHours</td>
+            <td>@item.Price</td>
+            <td>@item.TypeName</td>
+            <td>@item.LocationName</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Izmeni</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Detalji</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Obriši</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

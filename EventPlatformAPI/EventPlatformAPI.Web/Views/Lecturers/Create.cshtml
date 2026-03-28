@@ -1,0 +1,41 @@
+﻿@model EventPlatformAPI.Web.ViewModels.Lecturers.LecturerViewModel
+
+@{
+    ViewData["Title"] = "Novi predavač";
+}
+
+<h1>Novi predava?</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="FirstName" class="form-label">Ime</label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LastName" class="form-label">Prezime</label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label">Titula</label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Field" class="form-label">Oblast stručnosti</label>
+                <input asp-for="Field" class="form-control" />
+                <span asp-validation-for="Field" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Sačuvaj</button>
+            <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

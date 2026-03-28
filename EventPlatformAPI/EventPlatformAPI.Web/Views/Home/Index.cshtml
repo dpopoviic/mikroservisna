@@ -1,8 +1,56 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Početna";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mb-4">
+    <h1 class="display-5">Platforma za upravljanje stručnim događajima</h1>
+    <p>Organizator može da unosi i uređuje događaje, lokacije, predavače i termine predavanja.</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Događaji</h5>
+                <p class="card-text">Pregled, unos i izmena događaja.</p>
+                <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Otvori</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Lokacije</h5>
+                <p class="card-text">Definisanje lokacija i kapaciteta.</p>
+                <a asp-controller="Locations" asp-action="Index" class="btn btn-primary">Otvori</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Predavači</h5>
+                <p class="card-text">Unos i izmena podataka o predavačima.</p>
+                <a asp-controller="Lecturers" asp-action="Index" class="btn btn-primary">Otvori</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Tipovi događaja</h5>
+                <p class="card-text">Konferencija, seminar, radionica i drugo.</p>
+                <a asp-controller="EventTypes" asp-action="Index" class="btn btn-outline-primary">Otvori</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Termini predavača</h5>
+                <p class="card-text">Povezivanje predavača sa događajem i terminom.</p>
+                <a asp-controller="EventLecturers" asp-action="Index" class="btn btn-outline-primary">Otvori</a>
+            </div>
+        </div>
+    </div>
 </div>

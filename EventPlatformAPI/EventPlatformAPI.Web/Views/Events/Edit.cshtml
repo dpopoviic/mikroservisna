@@ -1,0 +1,57 @@
+﻿@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
+
+@{
+    ViewData["Title"] = "Izmena događaja";
+}
+
+<h1>Izmena doga?aja</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Naziv</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Agenda" class="form-label">Agenda</label>
+                <textarea asp-for="Agenda" class="form-control"></textarea>
+                <span asp-validation-for="Agenda" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DateTime" class="form-label">Datum i vreme</label>
+                <input asp-for="DateTime" type="datetime-local" class="form-control" />
+                <span asp-validation-for="DateTime" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DurationInHours" class="form-label">Trajanje (sati)</label>
+                <input asp-for="DurationInHours" class="form-control" />
+                <span asp-validation-for="DurationInHours" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Price" class="form-label">Cena kotizacije (din)</label>
+                <input asp-for="Price" class="form-control" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="TypeId" class="form-label">Tip događaja</label>
+                <select asp-for="TypeId" asp-items="ViewBag.TypeId" class="form-select"></select>
+                <span asp-validation-for="TypeId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LocationId" class="form-label">Lokacija</label>
+                <select asp-for="LocationId" asp-items="ViewBag.LocationId" class="form-select"></select>
+                <span asp-validation-for="LocationId" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Sačuvaj</button>
+            <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

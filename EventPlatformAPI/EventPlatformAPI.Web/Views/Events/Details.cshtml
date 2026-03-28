@@ -1,0 +1,61 @@
+﻿@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
+
+@{
+    ViewData["Title"] = "Detalji doga?aja";
+}
+
+<h1>Detalji doga?aja</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Naziv</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Agenda</dt>
+    <dd class="col-sm-9">@Model.Agenda</dd>
+
+    <dt class="col-sm-3">Datum i vreme</dt>
+    <dd class="col-sm-9">@Model.DateTime.ToString("dd.MM.yyyy HH:mm")</dd>
+
+    <dt class="col-sm-3">Trajanje</dt>
+    <dd class="col-sm-9">@Model.DurationInHours h</dd>
+
+    <dt class="col-sm-3">Cena(din)</dt>
+    <dd class="col-sm-9">@Model.Price</dd>
+
+    <dt class="col-sm-3">Tip</dt>
+    <dd class="col-sm-9">@Model.TypeName</dd>
+
+    <dt class="col-sm-3">Lokacija</dt>
+    <dd class="col-sm-9">@Model.LocationName</dd>
+</dl>
+
+<h4>Predavači na događaju</h4>
+@if (Model.EventLecturers.Any())
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Predavač</th>
+                <th>Termin</th>
+                <th>Tema</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var slot in Model.EventLecturers.OrderBy(x => x.DateTime))
+        {
+            <tr>
+                <td>@slot.LecturerFullName</td>
+                <td>@slot.DateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@slot.Theme</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Nema dodatih predava?a.</p>
+}
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Izmeni</a>
+<a asp-action="Index" class="btn btn-secondary">Nazad</a>

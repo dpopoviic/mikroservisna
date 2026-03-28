@@ -1,0 +1,42 @@
+﻿@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
+
+@{
+    ViewData["Title"] = "Izmena termina predavača";
+}
+
+<h1>Izmena termina predava?a</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="EventId" class="form-label">Događaj</label>
+                <select asp-for="EventId" asp-items="ViewBag.EventId" class="form-select"></select>
+                <span asp-validation-for="EventId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LecturerId" class="form-label">Predavač</label>
+                <select asp-for="LecturerId" asp-items="ViewBag.LecturerId" class="form-select"></select>
+                <span asp-validation-for="LecturerId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DateTime" class="form-label">Termin</label>
+                <input asp-for="DateTime" type="datetime-local" class="form-control" />
+                <span asp-validation-for="DateTime" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Theme" class="form-label">Tema</label>
+                <input asp-for="Theme" class="form-control" />
+                <span asp-validation-for="Theme" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Sačuvaj</button>
+            <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

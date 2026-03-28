@@ -1,0 +1,19 @@
+@model EventPlatformAPI.Web.ViewModels.Locations.LocationViewModel
+
+@{
+    ViewData["Title"] = "Detalji lokacije";
+}
+
+<h1>Detalji lokacije</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Naziv</dt>
+    <dd class="col-sm-10">@Model.Name</dd>
+    <dt class="col-sm-2">Adresa</dt>
+    <dd class="col-sm-10">@Model.Address</dd>
+    <dt class="col-sm-2">Kapacitet</dt>
+    <dd class="col-sm-10">@Model.Capacity</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Izmeni</a>
+<a asp-action="Index" class="btn btn-secondary">Nazad</a>

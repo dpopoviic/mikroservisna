@@ -1,0 +1,21 @@
+﻿@model EventPlatformAPI.Web.ViewModels.Lecturers.LecturerViewModel
+
+@{
+    ViewData["Title"] = "Brisanje predavača";
+}
+
+<h1>Brisanje predavača</h1>
+<h4>Da li ste sigurni?</h4>
+
+<dl class="row">
+    <dt class="col-sm-2">Predava?</dt>
+    <dd class="col-sm-10">@Model.FirstName @Model.LastName</dd>
+    <dt class="col-sm-2">Titula</dt>
+    <dd class="col-sm-10">@Model.Title</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Obriši</button>
+    <a asp-action="Index" class="btn btn-secondary">Nazad</a>
+</form>

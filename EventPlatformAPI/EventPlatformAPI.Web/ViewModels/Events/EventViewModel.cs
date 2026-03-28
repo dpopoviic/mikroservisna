@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using EventPlatformAPI.Web.ViewModels.EventLecturers;
 
-namespace EventPlatformAPI.Web.Domains;
+namespace EventPlatformAPI.Web.ViewModels.Events;
 
-public class Event
+public class EventViewModel
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -16,7 +17,8 @@ public class Event
     public int TypeId { get; set; }
     public int LocationId { get; set; }
 
-    public EventType? Type { get; set; }
-    public Location? Location { get; set; }
-    public ICollection<EventLecturer> EventLecturers { get; set; } = new List<EventLecturer>();
+    public string TypeName { get; set; } = string.Empty;
+    public string LocationName { get; set; } = string.Empty;
+
+    public ICollection<EventLecturerViewModel> EventLecturers { get; set; } = new List<EventLecturerViewModel>();
 }

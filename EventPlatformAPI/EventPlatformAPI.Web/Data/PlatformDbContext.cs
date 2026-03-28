@@ -30,6 +30,11 @@ namespace EventPlatformAPI.Web.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Description).HasMaxLength(1000);
+
+                entity.HasData(
+                    new EventType { Id = 1, Name = "Konferencija", Description = "Stručna konferencija" },
+                    new EventType { Id = 2, Name = "Seminar", Description = "Edukativni seminar" },
+                    new EventType { Id = 3, Name = "Radionica", Description = "Praktična radionica" });
             });
 
             modelBuilder.Entity<Location>(entity =>
@@ -39,6 +44,10 @@ namespace EventPlatformAPI.Web.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Address).IsRequired().HasMaxLength(300);
+
+                entity.HasData(
+                    new Location { Id = 1, Name = "Amfiteatar A", Address = "Bulevar kralja Aleksandra 73", Capacity = 200 },
+                    new Location { Id = 2, Name = "Sala 101", Address = "Kraljice Marije 16", Capacity = 80 });
             });
 
             modelBuilder.Entity<Lecturer>(entity =>
@@ -50,6 +59,10 @@ namespace EventPlatformAPI.Web.Data
                 entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Title).HasMaxLength(100);
                 entity.Property(e => e.Field).HasMaxLength(200);
+
+                entity.HasData(
+                    new Lecturer { Id = 1, FirstName = "Milan", LastName = "Petrović", Title = "Prof. dr", Field = "Softversko inženjerstvo" },
+                    new Lecturer { Id = 2, FirstName = "Jelena", LastName = "Jovanović", Title = "Doc. dr", Field = "Baze podataka" });
             });
 
             modelBuilder.Entity<Event>(entity =>
@@ -71,6 +84,30 @@ namespace EventPlatformAPI.Web.Data
                     .WithMany(l => l.Events)
                     .HasForeignKey(e => e.LocationId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasData(
+                    new Event
+                    {
+                        Id = 1,
+                        Name = "Savremene .NET tehnologije",
+                        DateTime = new DateTime(2026, 6, 10, 9, 0, 0),
+                        DurationInHours = 6.00m,
+                        Price = 3500.00m,
+                        Agenda = "Pregled novina u .NET platformi",
+                        TypeId = 1,
+                        LocationId = 1
+                    },
+                    new Event
+                    {
+                        Id = 2,
+                        Name = "Uvod u mikroservise",
+                        DateTime = new DateTime(2026, 6, 20, 10, 0, 0),
+                        DurationInHours = 4.00m,
+                        Price = 2500.00m,
+                        Agenda = "Osnovni principi mikroservisne arhitekture",
+                        TypeId = 2,
+                        LocationId = 2
+                    });
             });
 
             modelBuilder.Entity<EventLecturer>(entity =>
@@ -90,6 +127,32 @@ namespace EventPlatformAPI.Web.Data
                     .WithMany(l => l.EventLecturers)
                     .HasForeignKey(el => el.LecturerId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasData(
+                    new EventLecturer
+                    {
+                        Id = 1,
+                        EventId = 1,
+                        LecturerId = 1,
+                        DateTime = new DateTime(2026, 6, 10, 9, 0, 0),
+                        Theme = "Arhitektura modernih .NET aplikacija"
+                    },
+                    new EventLecturer
+                    {
+                        Id = 2,
+                        EventId = 1,
+                        LecturerId = 1,
+                        DateTime = new DateTime(2026, 6, 10, 10, 0, 0),
+                        Theme = "Performanse i optimizacija"
+                    },
+                    new EventLecturer
+                    {
+                        Id = 3,
+                        EventId = 2,
+                        LecturerId = 2,
+                        DateTime = new DateTime(2026, 6, 20, 10, 0, 0),
+                        Theme = "Modelovanje servisa i baza"
+                    });
             });
         }
     }
