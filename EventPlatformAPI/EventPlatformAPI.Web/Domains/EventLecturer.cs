@@ -2,6 +2,7 @@ namespace EventPlatformAPI.Web.Domains;
 
 public class EventLecturer
 {
+    public int Id { get; set; }
     public int EventId { get; set; }
     public int LecturerId { get; set; }
     public DateTime DateTime { get; set; }
