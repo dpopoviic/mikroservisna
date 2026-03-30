@@ -1,4 +1,4 @@
-using EventPlatformAPI.Web.Data;
+﻿using EventPlatformAPI.Web.Data;
 using EventPlatformAPI.Web.Domains;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
 using Microsoft.AspNetCore.Mvc;
@@ -100,7 +100,7 @@ namespace EventPlatformAPI.Web.Controllers
             }
             catch (DbUpdateException)
             {
-                ModelState.AddModelError(string.Empty, "Veza za isti doga?aj, predava?a i termin ve? postoji.");
+                ModelState.AddModelError(string.Empty, "Veza za isti događaj, predavača i termin već postoji.");
                 PopulateDropdowns(model.EventId, model.LecturerId);
                 return View(model);
             }
@@ -173,7 +173,7 @@ namespace EventPlatformAPI.Web.Controllers
             }
             catch (DbUpdateException)
             {
-                ModelState.AddModelError(string.Empty, "Veza za isti doga?aj, predava?a i termin ve? postoji.");
+                ModelState.AddModelError(string.Empty, "Veza za isti događaj, predavača i termin već postoji.");
                 PopulateDropdowns(model.EventId, model.LecturerId);
                 return View(model);
             }

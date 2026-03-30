@@ -1,4 +1,4 @@
-namespace EventPlatformAPI.Web.Models
+namespace EventPlatformAPI.Web.ViewModels
 {
     public class ErrorViewModel
     {

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using EventPlatformAPI.Web.Models;
+using EventPlatformAPI.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlatformAPI.Web.Controllers

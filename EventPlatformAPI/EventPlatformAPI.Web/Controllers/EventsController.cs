@@ -1,4 +1,4 @@
-using EventPlatformAPI.Web.Data;
+﻿using EventPlatformAPI.Web.Data;
 using EventPlatformAPI.Web.Domains;
 using EventPlatformAPI.Web.ViewModels.Events;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
@@ -98,7 +98,7 @@ namespace EventPlatformAPI.Web.Controllers
         {
             if (model.DurationInHours <= 0)
             {
-                ModelState.AddModelError(nameof(EventViewModel.DurationInHours), "Trajanje mora biti ve?e od 0.");
+                ModelState.AddModelError(nameof(EventViewModel.DurationInHours), "Trajanje mora biti veće od 0.");
             }
 
             if (!ModelState.IsValid)
@@ -163,7 +163,7 @@ namespace EventPlatformAPI.Web.Controllers
 
             if (model.DurationInHours <= 0)
             {
-                ModelState.AddModelError(nameof(EventViewModel.DurationInHours), "Trajanje mora biti ve?e od 0.");
+                ModelState.AddModelError(nameof(EventViewModel.DurationInHours), "Trajanje mora biti veće od 0.");
             }
 
             if (!ModelState.IsValid)
