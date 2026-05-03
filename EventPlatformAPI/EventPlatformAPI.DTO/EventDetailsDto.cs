@@ -13,4 +13,5 @@ public class EventDetailsDto
     public EventTypeDto? Type { get; set; }
     public LocationDto? Location { get; set; }
     public ICollection<LecturerDto> Lecturers { get; set; } = new List<LecturerDto>();
+    public ICollection<EventLecturerDto> EventLecturers { get; set; } = new List<EventLecturerDto>();
 }

@@ -1,6 +1,6 @@
 namespace EventPlatformAPI.DTO;
 
-public class EventCreateRequestDto
+public class EventUpdateRequestDto
 {
     public string Name { get; set; } = string.Empty;
     public string Agenda { get; set; } = string.Empty;
