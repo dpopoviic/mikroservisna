@@ -1,9 +1,48 @@
 using EventPlatformAPI.Web.Services;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+
+var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(
+    TimeSpan.FromSeconds(5));
+
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .Or<OperationCanceledException>()
+    .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500)
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: attempt => TimeSpan.FromSeconds(2 * attempt),
+        onRetry: (outcome, timespan, retryCount, context) =>
+        {
+            var message = $"Retry attempt {retryCount}: waiting {timespan.TotalSeconds}s. " +
+                $"Reason: {(outcome.Exception?.GetType().Name ?? outcome.Result?.StatusCode.ToString() ?? "Unknown")}";
+            System.Diagnostics.Debug.WriteLine(message);
+        });
+
+var circuitBreakerPolicy = Policy
+    .Handle<HttpRequestException>()
+    .Or<OperationCanceledException>()
+    .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500)
+    .CircuitBreakerAsync<HttpResponseMessage>(
+        handledEventsAllowedBeforeBreaking: 5,
+        durationOfBreak: TimeSpan.FromSeconds(30),
+        onBreak: (outcome, timespan) =>
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Circuit breaker OPEN for {timespan.TotalSeconds}s due to: {outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()}");
+        },
+        onReset: () =>
+        {
+            System.Diagnostics.Debug.WriteLine("Circuit breaker RESET - service recovered!");
+        });
+
+
+var combinedPolicy = Policy.WrapAsync(timeoutPolicy, retryPolicy, circuitBreakerPolicy);
 
 builder.Services.AddHttpClient<IEventsApiClient, EventsApiClient>(client =>
 {
@@ -14,7 +53,8 @@ builder.Services.AddHttpClient<IEventsApiClient, EventsApiClient>(client =>
     }
 
     client.BaseAddress = new Uri(baseUrl);
-});
+})
+.AddPolicyHandler(combinedPolicy);
 
 builder.Services.AddHttpClient<IReferencesApiClient, ReferencesApiClient>(client =>
 {
@@ -25,15 +65,14 @@ builder.Services.AddHttpClient<IReferencesApiClient, ReferencesApiClient>(client
     }
 
     client.BaseAddress = new Uri(baseUrl);
-});
+})
+.AddPolicyHandler(combinedPolicy);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

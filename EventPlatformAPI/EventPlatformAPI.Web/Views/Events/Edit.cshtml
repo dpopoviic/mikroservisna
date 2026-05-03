@@ -1,10 +1,19 @@
-﻿@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
+@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
 
 @{
-    ViewData["Title"] = "Izmena događaja";
+    ViewData["Title"] = "Izmena doga?aja";
 }
 
-<h1>Izmena događaja</h1>
+<h1>Izmena doga?aja</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="row">
     <div class="col-md-8">
@@ -37,7 +46,7 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="TypeId" class="form-label">Tip događaja</label>
+                <label asp-for="TypeId" class="form-label">Tip doga?aja</label>
                 <select asp-for="TypeId" asp-items="ViewBag.TypeId" class="form-select"></select>
                 <span asp-validation-for="TypeId" class="text-danger"></span>
             </div>
@@ -46,7 +55,7 @@
                 <select asp-for="LocationId" asp-items="ViewBag.LocationId" class="form-select"></select>
                 <span asp-validation-for="LocationId" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-primary">Sačuvaj</button>
+            <button type="submit" class="btn btn-primary">Sa?uvaj</button>
             <a asp-action="Index" class="btn btn-secondary">Nazad</a>
         </form>
     </div>

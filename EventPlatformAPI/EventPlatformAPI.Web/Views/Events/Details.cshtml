@@ -1,10 +1,19 @@
-﻿@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
+@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
 
 @{
-    ViewData["Title"] = "Detalji događaja";
+    ViewData["Title"] = "Detalji doga?aja";
 }
 
-<h1>Detalji događaja</h1>
+<h1>Detalji doga?aja</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <dl class="row">
     <dt class="col-sm-3">Naziv</dt>
@@ -29,13 +38,13 @@
     <dd class="col-sm-9">@Model.LocationName</dd>
 </dl>
 
-<h4>Predavači na događaju</h4>
+<h4>Predava?i na doga?aju</h4>
 @if (Model.EventLecturers.Any())
 {
     <table class="table table-sm">
         <thead>
             <tr>
-                <th>Predavač</th>
+                <th>Predava?</th>
                 <th>Termin</th>
                 <th>Tema</th>
             </tr>
@@ -54,7 +63,7 @@
 }
 else
 {
-    <p>Nema dodatih predavača.</p>
+    <p>Nema dodatih predava?a.</p>
 }
 
 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Izmeni</a>

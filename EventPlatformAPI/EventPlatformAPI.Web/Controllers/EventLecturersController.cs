@@ -3,6 +3,8 @@ using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 namespace EventPlatformAPI.Web.Controllers
 {
@@ -19,185 +21,293 @@ namespace EventPlatformAPI.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var slots = await _eventsApiClient.GetEventLecturersAsync();
-            var events = await _eventsApiClient.GetEventsAsync();
-            var lecturers = await _referencesApiClient.GetLecturersAsync();
+            try
+            {
+                var slots = await _eventsApiClient.GetEventLecturersAsync();
+                var events = await _eventsApiClient.GetEventsAsync();
+                var lecturers = await _referencesApiClient.GetLecturersAsync();
 
-            var eventLookup = events.ToDictionary(x => x.Id, x => x.Name);
-            var lecturerLookup = lecturers.ToDictionary(x => x.Id, x => $"{x.FirstName} {x.LastName}");
+                var eventLookup = events.ToDictionary(x => x.Id, x => x.Name);
+                var lecturerLookup = lecturers.ToDictionary(x => x.Id, x => $"{x.FirstName} {x.LastName}");
 
-            var models = slots
-                .OrderBy(e => e.DateTime)
-                .Select(e => new EventLecturerViewModel
-                {
-                    Id = e.Id,
-                    EventId = e.EventId,
-                    LecturerId = e.LecturerId,
-                    DateTime = e.DateTime,
-                    Theme = e.Theme,
-                    EventName = eventLookup.GetValueOrDefault(e.EventId, string.Empty),
-                    LecturerFullName = lecturerLookup.GetValueOrDefault(e.LecturerId, string.Empty)
-                })
-                .ToList();
+                var models = slots
+                    .OrderBy(e => e.DateTime)
+                    .Select(e => new EventLecturerViewModel
+                    {
+                        Id = e.Id,
+                        EventId = e.EventId,
+                        LecturerId = e.LecturerId,
+                        DateTime = e.DateTime,
+                        Theme = e.Theme,
+                        EventName = eventLookup.GetValueOrDefault(e.EventId, string.Empty),
+                        LecturerFullName = lecturerLookup.GetValueOrDefault(e.LecturerId, string.Empty)
+                    })
+                    .ToList();
 
-            return View(models);
+                return View(models);
+            }
+            catch (TimeoutRejectedException)
+            {
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return View(new List<EventLecturerViewModel>());
+            }
+            catch (BrokenCircuitException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return View(new List<EventLecturerViewModel>());
+            }
         }
 
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
+                if (slot == null)
+                {
+                    return NotFound();
+                }
+
+                var eventDto = await _eventsApiClient.GetEventByIdAsync(slot.EventId);
+                var lecturerDto = await _referencesApiClient.GetLecturerByIdAsync(slot.LecturerId);
+
+                return View(new EventLecturerViewModel
+                {
+                    Id = slot.Id,
+                    EventId = slot.EventId,
+                    LecturerId = slot.LecturerId,
+                    DateTime = slot.DateTime,
+                    Theme = slot.Theme,
+                    EventName = eventDto?.Name ?? string.Empty,
+                    LecturerFullName = lecturerDto == null ? string.Empty : $"{lecturerDto.FirstName} {lecturerDto.LastName}"
+                });
             }
-
-            var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
-            if (slot == null)
+            catch (TimeoutRejectedException)
             {
-                return NotFound();
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return View();
             }
-
-            var eventDto = await _eventsApiClient.GetEventByIdAsync(slot.EventId);
-            var lecturerDto = await _referencesApiClient.GetLecturerByIdAsync(slot.LecturerId);
-
-            return View(new EventLecturerViewModel
+            catch (BrokenCircuitException)
             {
-                Id = slot.Id,
-                EventId = slot.EventId,
-                LecturerId = slot.LecturerId,
-                DateTime = slot.DateTime,
-                Theme = slot.Theme,
-                EventName = eventDto?.Name ?? string.Empty,
-                LecturerFullName = lecturerDto == null ? string.Empty : $"{lecturerDto.FirstName} {lecturerDto.LastName}"
-            });
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return View();
+            }
         }
 
         public async Task<IActionResult> Create()
         {
-            await PopulateDropdowns();
-            return View();
+            try
+            {
+                await PopulateDropdowns();
+                return View();
+            }
+            catch (TimeoutRejectedException)
+            {
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return View();
+            }
+            catch (BrokenCircuitException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return View();
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EventLecturerViewModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                await PopulateDropdowns(model.EventId, model.LecturerId);
-                return View(model);
-            }
+                if (!ModelState.IsValid)
+                {
+                    await PopulateDropdowns(model.EventId, model.LecturerId);
+                    return View(model);
+                }
 
-            var ok = await _eventsApiClient.CreateEventLecturerAsync(new EventLecturerCreateRequestDto
-            {
-                EventId = model.EventId,
-                LecturerId = model.LecturerId,
-                DateTime = model.DateTime,
-                Theme = model.Theme
-            });
+                var ok = await _eventsApiClient.CreateEventLecturerAsync(new EventLecturerCreateRequestDto
+                {
+                    EventId = model.EventId,
+                    LecturerId = model.LecturerId,
+                    DateTime = model.DateTime,
+                    Theme = model.Theme
+                });
             // pitanje: da li ovde ponovo proveriti da li izabrani predavac postoji u tabeli predavaca?
-            if (!ok)
+                if (!ok)
+                {
+                    ModelState.AddModelError(string.Empty, "Veza za isti događaj, predavača i termin već postoji ili je unos neispravan.");
+                    await PopulateDropdowns(model.EventId, model.LecturerId);
+                    return View(model);
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (TimeoutRejectedException)
             {
-                ModelState.AddModelError(string.Empty, "Veza za isti događaj, predavača i termin već postoji ili je unos neispravan.");
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 await PopulateDropdowns(model.EventId, model.LecturerId);
                 return View(model);
             }
-
-            return RedirectToAction(nameof(Index));
+            catch (BrokenCircuitException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                await PopulateDropdowns(model.EventId, model.LecturerId);
+                return View(model);
+            }
         }
 
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
+                if (slot == null)
+                {
+                    return NotFound();
+                }
+
+                var model = new EventLecturerViewModel
+                {
+                    Id = slot.Id,
+                    EventId = slot.EventId,
+                    LecturerId = slot.LecturerId,
+                    DateTime = slot.DateTime,
+                    Theme = slot.Theme
+                };
+
+                await PopulateDropdowns(model.EventId, model.LecturerId);
+                return View(model);
             }
-
-            var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
-            if (slot == null)
+            catch (TimeoutRejectedException)
             {
-                return NotFound();
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return View();
             }
-
-            var model = new EventLecturerViewModel
+            catch (BrokenCircuitException)
             {
-                Id = slot.Id,
-                EventId = slot.EventId,
-                LecturerId = slot.LecturerId,
-                DateTime = slot.DateTime,
-                Theme = slot.Theme
-            };
-
-            await PopulateDropdowns(model.EventId, model.LecturerId);
-            return View(model);
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return View();
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, EventLecturerViewModel model)
         {
-            if (id != model.Id)
+            try
             {
-                return NotFound();
-            }
+                if (id != model.Id)
+                {
+                    return NotFound();
+                }
 
-            if (!ModelState.IsValid)
+                if (!ModelState.IsValid)
+                {
+                    await PopulateDropdowns(model.EventId, model.LecturerId);
+                    return View(model);
+                }
+
+                var ok = await _eventsApiClient.UpdateEventLecturerAsync(id, new EventLecturerUpdateRequestDto
+                {
+                    EventId = model.EventId,
+                    LecturerId = model.LecturerId,
+                    DateTime = model.DateTime,
+                    Theme = model.Theme
+                });
+
+                if (!ok)
+                {
+                    ModelState.AddModelError(string.Empty, "Greška pri izmeni termina predavača.");
+                    await PopulateDropdowns(model.EventId, model.LecturerId);
+                    return View(model);
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (TimeoutRejectedException)
             {
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 await PopulateDropdowns(model.EventId, model.LecturerId);
                 return View(model);
             }
-
-            var ok = await _eventsApiClient.UpdateEventLecturerAsync(id, new EventLecturerUpdateRequestDto
+            catch (BrokenCircuitException)
             {
-                EventId = model.EventId,
-                LecturerId = model.LecturerId,
-                DateTime = model.DateTime,
-                Theme = model.Theme
-            });
-
-            if (!ok)
-            {
-                ModelState.AddModelError(string.Empty, "Greška pri izmeni termina predavača.");
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 await PopulateDropdowns(model.EventId, model.LecturerId);
                 return View(model);
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
+                if (slot == null)
+                {
+                    return NotFound();
+                }
+
+                var eventDto = await _eventsApiClient.GetEventByIdAsync(slot.EventId);
+                var lecturerDto = await _referencesApiClient.GetLecturerByIdAsync(slot.LecturerId);
+
+                return View(new EventLecturerViewModel
+                {
+                    Id = slot.Id,
+                    EventId = slot.EventId,
+                    LecturerId = slot.LecturerId,
+                    DateTime = slot.DateTime,
+                    Theme = slot.Theme,
+                    EventName = eventDto?.Name ?? string.Empty,
+                    LecturerFullName = lecturerDto == null ? string.Empty : $"{lecturerDto.FirstName} {lecturerDto.LastName}"
+                });
             }
-
-            var slot = await _eventsApiClient.GetEventLecturerByIdAsync(id.Value);
-            if (slot == null)
+            catch (TimeoutRejectedException)
             {
-                return NotFound();
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return View();
             }
-
-            var eventDto = await _eventsApiClient.GetEventByIdAsync(slot.EventId);
-            var lecturerDto = await _referencesApiClient.GetLecturerByIdAsync(slot.LecturerId);
-
-            return View(new EventLecturerViewModel
+            catch (BrokenCircuitException)
             {
-                Id = slot.Id,
-                EventId = slot.EventId,
-                LecturerId = slot.LecturerId,
-                DateTime = slot.DateTime,
-                Theme = slot.Theme,
-                EventName = eventDto?.Name ?? string.Empty,
-                LecturerFullName = lecturerDto == null ? string.Empty : $"{lecturerDto.FirstName} {lecturerDto.LastName}"
-            });
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return View();
+            }
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            await _eventsApiClient.DeleteEventLecturerAsync(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _eventsApiClient.DeleteEventLecturerAsync(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (TimeoutRejectedException)
+            {
+                ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
+                return RedirectToAction(nameof(Index));
+            }
+            catch (BrokenCircuitException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         private async Task PopulateDropdowns(int? eventId = null, int? lecturerId = null)

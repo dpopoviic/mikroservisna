@@ -1,11 +1,20 @@
-﻿@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
+@model EventPlatformAPI.Web.ViewModels.Events.EventViewModel
 
 @{
-    ViewData["Title"] = "Brisanje događaja";
+    ViewData["Title"] = "Brisanje doga?aja";
 }
 
-<h1>Brisanje događaja</h1>
+<h1>Brisanje doga?aja</h1>
 <h4>Da li ste sigurni?</h4>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <dl class="row">
     <dt class="col-sm-3">Naziv</dt>
@@ -20,6 +29,6 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Obriši</button>
+    <button type="submit" class="btn btn-danger">Obri�i</button>
     <a asp-action="Index" class="btn btn-secondary">Nazad</a>
 </form>

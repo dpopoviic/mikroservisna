@@ -6,6 +6,15 @@
 
 <h1>Lokacije</h1>
 
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Greška!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <p>
     <a asp-action="Create" class="btn btn-primary">Nova lokacija</a>
 </p>

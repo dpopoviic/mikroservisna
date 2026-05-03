@@ -1,10 +1,19 @@
-﻿@model IEnumerable<EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel>
+@model IEnumerable<EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel>
 
 @{
-    ViewData["Title"] = "Termini predavača";
+    ViewData["Title"] = "Termini predava?a";
 }
 
-<h1>Termini predavača na događajima</h1>
+<h1>Termini predava?a na doga?ajima</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <p>
     <a asp-action="Create" class="btn btn-primary">Novi termin</a>
@@ -12,8 +21,8 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Događaj</th>
-            <th>Predavač</th>
+            <th>Doga?aj</th>
+            <th>Predava?</th>
             <th>Termin</th>
             <th>Tema</th>
             <th></th>
@@ -29,7 +38,7 @@
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Izmeni</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Detalji</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Obriši</a>
+                <a asp-action="Delete" asp-route-id="@item.Id">Obri�i</a>
             </td>
         </tr>
 }

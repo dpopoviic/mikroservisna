@@ -1,22 +1,31 @@
-﻿@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
+@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
 
 @{
-    ViewData["Title"] = "Novi termin predavača";
+    ViewData["Title"] = "Novi termin predava?a";
 }
 
-<h1>Novi termin predavača</h1>
+<h1>Novi termin predava?a</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="row">
     <div class="col-md-8">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
-                <label asp-for="EventId" class="form-label">Događaj</label>
+                <label asp-for="EventId" class="form-label">Doga?aj</label>
                 <select asp-for="EventId" asp-items="ViewBag.EventId" class="form-select"></select>
                 <span asp-validation-for="EventId" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="LecturerId" class="form-label">Predavač</label>
+                <label asp-for="LecturerId" class="form-label">Predava?</label>
                 <select asp-for="LecturerId" asp-items="ViewBag.LecturerId" class="form-select"></select>
                 <span asp-validation-for="LecturerId" class="text-danger"></span>
             </div>
@@ -30,7 +39,7 @@
                 <input asp-for="Theme" class="form-control" />
                 <span asp-validation-for="Theme" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-primary">Sačuvaj</button>
+            <button type="submit" class="btn btn-primary">Sa?uvaj</button>
             <a asp-action="Index" class="btn btn-secondary">Nazad</a>
         </form>
     </div>

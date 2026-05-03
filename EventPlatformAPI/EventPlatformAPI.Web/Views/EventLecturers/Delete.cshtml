@@ -1,16 +1,25 @@
-﻿@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
+@model EventPlatformAPI.Web.ViewModels.EventLecturers.EventLecturerViewModel
 
 @{
-    ViewData["Title"] = "Brisanje termina predavača";
+    ViewData["Title"] = "Brisanje termina predava?a";
 }
 
-<h1>Brisanje termina predavača</h1>
+<h1>Brisanje termina predava?a</h1>
 <h4>Da li ste sigurni?</h4>
 
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Gre�ka!</strong>
+        <div asp-validation-summary="All"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <dl class="row">
-    <dt class="col-sm-3">Događaj</dt>
+    <dt class="col-sm-3">Doga?aj</dt>
     <dd class="col-sm-9">@Model.EventName</dd>
-    <dt class="col-sm-3">Predavač</dt>
+    <dt class="col-sm-3">Predava?</dt>
     <dd class="col-sm-9">@Model.LecturerFullName</dd>
     <dt class="col-sm-3">Termin</dt>
     <dd class="col-sm-9">@Model.DateTime.ToString("dd.MM.yyyy HH:mm")</dd>
@@ -18,6 +27,6 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Obriši</button>
+    <button type="submit" class="btn btn-danger">Obri�i</button>
     <a asp-action="Index" class="btn btn-secondary">Nazad</a>
 </form>
