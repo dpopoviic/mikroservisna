@@ -1,27 +1,33 @@
-﻿using EventPlatformAPI.Web.Data;
-using EventPlatformAPI.Web.Domains;
+﻿using EventPlatformAPI.DTO;
+using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.Events;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.Web.Controllers
 {
     public class EventsController : Controller
     {
-        private readonly PlatformDbContext _context;
+        private readonly IEventsApiClient _eventsApiClient;
+        private readonly IReferencesApiClient _referencesApiClient;
 
-        public EventsController(PlatformDbContext context)
+        public EventsController(IEventsApiClient eventsApiClient, IReferencesApiClient referencesApiClient)
         {
-            _context = context;
+            _eventsApiClient = eventsApiClient;
+            _referencesApiClient = referencesApiClient;
         }
 
         public async Task<IActionResult> Index()
         {
-            var events = await _context.Events
-                .Include(e => e.Type)
-                .Include(e => e.Location)
+            var events = await _eventsApiClient.GetEventsAsync();
+            var eventTypes = await _eventsApiClient.GetEventTypesAsync();
+            var locations = await _referencesApiClient.GetLocationsAsync();
+
+            var typeLookup = eventTypes.ToDictionary(x => x.Id, x => x.Name);
+            var locationLookup = locations.ToDictionary(x => x.Id, x => x.Name);
+
+            var models = events
                 .OrderBy(e => e.DateTime)
                 .Select(e => new EventViewModel
                 {
@@ -30,15 +36,14 @@ namespace EventPlatformAPI.Web.Controllers
                     DateTime = e.DateTime,
                     DurationInHours = e.DurationInHours,
                     Price = e.Price,
-                    Agenda = e.Agenda,
                     TypeId = e.TypeId,
                     LocationId = e.LocationId,
-                    TypeName = e.Type != null ? e.Type.Name : string.Empty,
-                    LocationName = e.Location != null ? e.Location.Name : string.Empty
+                    TypeName = typeLookup.GetValueOrDefault(e.TypeId, string.Empty),
+                    LocationName = locationLookup.GetValueOrDefault(e.LocationId, string.Empty)
                 })
-                .ToListAsync();
+                .ToList();
 
-            return View(events);
+            return View(models);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -48,47 +53,47 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var model = await _context.Events
-                .Include(e => e.Type)
-                .Include(e => e.Location)
-                .Include(e => e.EventLecturers)
-                    .ThenInclude(el => el.Lecturer)
-                .Where(m => m.Id == id)
-                .Select(e => new EventViewModel
-                {
-                    Id = e.Id,
-                    Name = e.Name,
-                    DateTime = e.DateTime,
-                    DurationInHours = e.DurationInHours,
-                    Price = e.Price,
-                    Agenda = e.Agenda,
-                    TypeId = e.TypeId,
-                    LocationId = e.LocationId,
-                    TypeName = e.Type != null ? e.Type.Name : string.Empty,
-                    LocationName = e.Location != null ? e.Location.Name : string.Empty,
-                    EventLecturers = e.EventLecturers.Select(el => new EventLecturerViewModel
+            var eventDto = await _eventsApiClient.GetEventByIdAsync(id.Value);
+            if (eventDto == null)
+            {
+                return NotFound();
+            }
+
+            var location = await _referencesApiClient.GetLocationByIdAsync(eventDto.LocationId);
+            var lecturers = await _referencesApiClient.GetLecturersAsync();
+            var lecturerLookup = lecturers.ToDictionary(x => x.Id, x => $"{x.FirstName} {x.LastName}");
+
+            var model = new EventViewModel
+            {
+                Id = eventDto.Id,
+                Name = eventDto.Name,
+                DateTime = eventDto.DateTime,
+                DurationInHours = eventDto.DurationInHours,
+                Price = eventDto.Price,
+                Agenda = eventDto.Agenda,
+                TypeId = eventDto.TypeId,
+                LocationId = eventDto.LocationId,
+                TypeName = eventDto.Type?.Name ?? string.Empty,
+                LocationName = location?.Name ?? string.Empty,
+                EventLecturers = eventDto.EventLecturers
+                    .Select(el => new EventLecturerViewModel
                     {
                         Id = el.Id,
                         EventId = el.EventId,
                         LecturerId = el.LecturerId,
                         DateTime = el.DateTime,
                         Theme = el.Theme,
-                        LecturerFullName = el.Lecturer != null ? el.Lecturer.FirstName + " " + el.Lecturer.LastName : string.Empty
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
-
-            if (model == null)
-            {
-                return NotFound();
-            }
+                        LecturerFullName = lecturerLookup.GetValueOrDefault(el.LecturerId, string.Empty)
+                    })
+                    .ToList()
+            };
 
             return View(model);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            PopulateDropdowns();
+            await PopulateDropdowns();
             return View();
         }
 
@@ -103,23 +108,28 @@ namespace EventPlatformAPI.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                PopulateDropdowns(model.TypeId, model.LocationId);
+                await PopulateDropdowns(model.TypeId, model.LocationId);
                 return View(model);
             }
 
-            var entity = new Event
+            var ok = await _eventsApiClient.CreateEventAsync(new EventCreateRequestDto
             {
                 Name = model.Name,
+                Agenda = model.Agenda,
                 DateTime = model.DateTime,
                 DurationInHours = model.DurationInHours,
                 Price = model.Price,
-                Agenda = model.Agenda,
                 TypeId = model.TypeId,
                 LocationId = model.LocationId
-            };
+            });
 
-            _context.Add(entity);
-            await _context.SaveChangesAsync();
+            if (!ok)
+            {
+                ModelState.AddModelError(string.Empty, "Greška pri kreiranju događaja.");
+                await PopulateDropdowns(model.TypeId, model.LocationId);
+                return View(model);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -130,25 +140,25 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var entity = await _context.Events.FindAsync(id);
-            if (entity == null)
+            var eventDto = await _eventsApiClient.GetEventByIdAsync(id.Value);
+            if (eventDto == null)
             {
                 return NotFound();
             }
 
             var model = new EventViewModel
             {
-                Id = entity.Id,
-                Name = entity.Name,
-                DateTime = entity.DateTime,
-                DurationInHours = entity.DurationInHours,
-                Price = entity.Price,
-                Agenda = entity.Agenda,
-                TypeId = entity.TypeId,
-                LocationId = entity.LocationId
+                Id = eventDto.Id,
+                Name = eventDto.Name,
+                DateTime = eventDto.DateTime,
+                DurationInHours = eventDto.DurationInHours,
+                Price = eventDto.Price,
+                Agenda = eventDto.Agenda,
+                TypeId = eventDto.TypeId,
+                LocationId = eventDto.LocationId
             };
 
-            PopulateDropdowns(model.TypeId, model.LocationId);
+            await PopulateDropdowns(model.TypeId, model.LocationId);
             return View(model);
         }
 
@@ -168,36 +178,26 @@ namespace EventPlatformAPI.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                PopulateDropdowns(model.TypeId, model.LocationId);
+                await PopulateDropdowns(model.TypeId, model.LocationId);
                 return View(model);
             }
 
-            var entity = await _context.Events.FindAsync(id);
-            if (entity == null)
+            var ok = await _eventsApiClient.UpdateEventAsync(id, new EventUpdateRequestDto
             {
-                return NotFound();
-            }
+                Name = model.Name,
+                Agenda = model.Agenda,
+                DateTime = model.DateTime,
+                DurationInHours = model.DurationInHours,
+                Price = model.Price,
+                TypeId = model.TypeId,
+                LocationId = model.LocationId
+            });
 
-            entity.Name = model.Name;
-            entity.DateTime = model.DateTime;
-            entity.DurationInHours = model.DurationInHours;
-            entity.Price = model.Price;
-            entity.Agenda = model.Agenda;
-            entity.TypeId = model.TypeId;
-            entity.LocationId = model.LocationId;
-
-            try
+            if (!ok)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Events.Any(e => e.Id == model.Id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                ModelState.AddModelError(string.Empty, "Greška pri izmeni događaja.");
+                await PopulateDropdowns(model.TypeId, model.LocationId);
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
@@ -210,51 +210,44 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var model = await _context.Events
-                .Include(e => e.Type)
-                .Include(e => e.Location)
-                .Where(m => m.Id == id)
-                .Select(e => new EventViewModel
-                {
-                    Id = e.Id,
-                    Name = e.Name,
-                    DateTime = e.DateTime,
-                    DurationInHours = e.DurationInHours,
-                    Price = e.Price,
-                    Agenda = e.Agenda,
-                    TypeId = e.TypeId,
-                    LocationId = e.LocationId,
-                    TypeName = e.Type != null ? e.Type.Name : string.Empty,
-                    LocationName = e.Location != null ? e.Location.Name : string.Empty
-                })
-                .FirstOrDefaultAsync();
-
-            if (model == null)
+            var eventDto = await _eventsApiClient.GetEventByIdAsync(id.Value);
+            if (eventDto == null)
             {
                 return NotFound();
             }
 
-            return View(model);
+            var location = await _referencesApiClient.GetLocationByIdAsync(eventDto.LocationId);
+
+            return View(new EventViewModel
+            {
+                Id = eventDto.Id,
+                Name = eventDto.Name,
+                DateTime = eventDto.DateTime,
+                DurationInHours = eventDto.DurationInHours,
+                Price = eventDto.Price,
+                Agenda = eventDto.Agenda,
+                TypeId = eventDto.TypeId,
+                LocationId = eventDto.LocationId,
+                TypeName = eventDto.Type?.Name ?? string.Empty,
+                LocationName = location?.Name ?? string.Empty
+            });
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var @event = await _context.Events.FindAsync(id);
-            if (@event != null)
-            {
-                _context.Events.Remove(@event);
-                await _context.SaveChangesAsync();
-            }
-
+            await _eventsApiClient.DeleteEventAsync(id);
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateDropdowns(int? typeId = null, int? locationId = null)
+        private async Task PopulateDropdowns(int? typeId = null, int? locationId = null)
         {
-            ViewData["TypeId"] = new SelectList(_context.EventTypes.OrderBy(t => t.Name), "Id", "Name", typeId);
-            ViewData["LocationId"] = new SelectList(_context.Locations.OrderBy(l => l.Name), "Id", "Name", locationId);
+            var eventTypes = await _eventsApiClient.GetEventTypesAsync();
+            var locations = await _referencesApiClient.GetLocationsAsync();
+
+            ViewData["TypeId"] = new SelectList(eventTypes.OrderBy(t => t.Name), "Id", "Name", typeId);
+            ViewData["LocationId"] = new SelectList(locations.OrderBy(l => l.Name), "Id", "Name", locationId);
         }
     }
 }

@@ -1,23 +1,22 @@
-using EventPlatformAPI.Web.Data;
-using EventPlatformAPI.Web.Domains;
+using EventPlatformAPI.DTO;
+using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.Lecturers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.Web.Controllers
 {
     public class LecturersController : Controller
     {
-        private readonly PlatformDbContext _context;
+        private readonly IReferencesApiClient _referencesApiClient;
 
-        public LecturersController(PlatformDbContext context)
+        public LecturersController(IReferencesApiClient referencesApiClient)
         {
-            _context = context;
+            _referencesApiClient = referencesApiClient;
         }
 
         public async Task<IActionResult> Index()
         {
-            var models = await _context.Lecturers
+            var models = (await _referencesApiClient.GetLecturersAsync())
                 .OrderBy(l => l.LastName)
                 .ThenBy(l => l.FirstName)
                 .Select(l => new LecturerViewModel
@@ -28,7 +27,7 @@ namespace EventPlatformAPI.Web.Controllers
                     Title = l.Title,
                     Field = l.Field
                 })
-                .ToListAsync();
+                .ToList();
 
             return View(models);
         }
@@ -40,24 +39,20 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var lecturer = await _context.Lecturers
-                .Where(m => m.Id == id)
-                .Select(m => new LecturerViewModel
-                {
-                    Id = m.Id,
-                    FirstName = m.FirstName,
-                    LastName = m.LastName,
-                    Title = m.Title,
-                    Field = m.Field
-                })
-                .FirstOrDefaultAsync();
-
+            var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
             if (lecturer == null)
             {
                 return NotFound();
             }
 
-            return View(lecturer);
+            return View(new LecturerViewModel
+            {
+                Id = lecturer.Id,
+                FirstName = lecturer.FirstName,
+                LastName = lecturer.LastName,
+                Title = lecturer.Title,
+                Field = lecturer.Field
+            });
         }
 
         public IActionResult Create()
@@ -74,16 +69,20 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var lecturer = new Lecturer
+            var ok = await _referencesApiClient.CreateLecturerAsync(new LecturerDto
             {
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Title = model.Title,
                 Field = model.Field
-            };
+            });
 
-            _context.Add(lecturer);
-            await _context.SaveChangesAsync();
+            if (!ok)
+            {
+                ModelState.AddModelError(string.Empty, "Greška pri ?uvanju predava?a.");
+                return View(model);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -94,22 +93,20 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var lecturer = await _context.Lecturers.FindAsync(id);
+            var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
             if (lecturer == null)
             {
                 return NotFound();
             }
 
-            var model = new LecturerViewModel
+            return View(new LecturerViewModel
             {
                 Id = lecturer.Id,
                 FirstName = lecturer.FirstName,
                 LastName = lecturer.LastName,
                 Title = lecturer.Title,
                 Field = lecturer.Field
-            };
-
-            return View(model);
+            });
         }
 
         [HttpPost]
@@ -126,29 +123,19 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var lecturer = await _context.Lecturers.FindAsync(id);
-            if (lecturer == null)
+            var ok = await _referencesApiClient.UpdateLecturerAsync(id, new LecturerDto
             {
-                return NotFound();
-            }
+                Id = model.Id,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Title = model.Title,
+                Field = model.Field
+            });
 
-            lecturer.FirstName = model.FirstName;
-            lecturer.LastName = model.LastName;
-            lecturer.Title = model.Title;
-            lecturer.Field = model.Field;
-
-            try
+            if (!ok)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Lecturers.Any(e => e.Id == model.Id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                ModelState.AddModelError(string.Empty, "Greška pri izmeni predava?a.");
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
@@ -161,37 +148,27 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var lecturer = await _context.Lecturers
-                .Where(m => m.Id == id)
-                .Select(m => new LecturerViewModel
-                {
-                    Id = m.Id,
-                    FirstName = m.FirstName,
-                    LastName = m.LastName,
-                    Title = m.Title,
-                    Field = m.Field
-                })
-                .FirstOrDefaultAsync();
-
+            var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
             if (lecturer == null)
             {
                 return NotFound();
             }
 
-            return View(lecturer);
+            return View(new LecturerViewModel
+            {
+                Id = lecturer.Id,
+                FirstName = lecturer.FirstName,
+                LastName = lecturer.LastName,
+                Title = lecturer.Title,
+                Field = lecturer.Field
+            });
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var lecturer = await _context.Lecturers.FindAsync(id);
-            if (lecturer != null)
-            {
-                _context.Lecturers.Remove(lecturer);
-                await _context.SaveChangesAsync();
-            }
-
+            await _referencesApiClient.DeleteLecturerAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

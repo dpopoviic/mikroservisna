@@ -1,12 +1,31 @@
-using EventPlatformAPI.Web.Data;
-using Microsoft.EntityFrameworkCore;
+using EventPlatformAPI.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<PlatformDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<IEventsApiClient, EventsApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["ApiEndpoints:EventsApiBaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        throw new InvalidOperationException("ApiEndpoints:EventsApiBaseUrl nije podešen.");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<IReferencesApiClient, ReferencesApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["ApiEndpoints:ReferencesApiBaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+    {
+        throw new InvalidOperationException("ApiEndpoints:ReferencesApiBaseUrl nije podešen.");
+    }
+
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 var app = builder.Build();
 

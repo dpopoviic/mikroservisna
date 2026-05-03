@@ -1,23 +1,22 @@
-using EventPlatformAPI.Web.Data;
-using EventPlatformAPI.Web.Domains;
+using EventPlatformAPI.DTO;
+using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.Locations;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.Web.Controllers
 {
     public class LocationsController : Controller
     {
-        private readonly PlatformDbContext _context;
+        private readonly IReferencesApiClient _referencesApiClient;
 
-        public LocationsController(PlatformDbContext context)
+        public LocationsController(IReferencesApiClient referencesApiClient)
         {
-            _context = context;
+            _referencesApiClient = referencesApiClient;
         }
 
         public async Task<IActionResult> Index()
         {
-            var models = await _context.Locations
+            var models = (await _referencesApiClient.GetLocationsAsync())
                 .OrderBy(l => l.Name)
                 .Select(l => new LocationViewModel
                 {
@@ -26,7 +25,7 @@ namespace EventPlatformAPI.Web.Controllers
                     Address = l.Address,
                     Capacity = l.Capacity
                 })
-                .ToListAsync();
+                .ToList();
 
             return View(models);
         }
@@ -38,23 +37,19 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var location = await _context.Locations
-                .Where(m => m.Id == id)
-                .Select(m => new LocationViewModel
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Address = m.Address,
-                    Capacity = m.Capacity
-                })
-                .FirstOrDefaultAsync();
-
+            var location = await _referencesApiClient.GetLocationByIdAsync(id.Value);
             if (location == null)
             {
                 return NotFound();
             }
 
-            return View(location);
+            return View(new LocationViewModel
+            {
+                Id = location.Id,
+                Name = location.Name,
+                Address = location.Address,
+                Capacity = location.Capacity
+            });
         }
 
         public IActionResult Create()
@@ -71,15 +66,19 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var location = new Location
+            var ok = await _referencesApiClient.CreateLocationAsync(new LocationDto
             {
                 Name = model.Name,
                 Address = model.Address,
                 Capacity = model.Capacity
-            };
+            });
 
-            _context.Add(location);
-            await _context.SaveChangesAsync();
+            if (!ok)
+            {
+                ModelState.AddModelError(string.Empty, "Greška pri ?uvanju lokacije.");
+                return View(model);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -90,21 +89,19 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var location = await _context.Locations.FindAsync(id);
+            var location = await _referencesApiClient.GetLocationByIdAsync(id.Value);
             if (location == null)
             {
                 return NotFound();
             }
 
-            var model = new LocationViewModel
+            return View(new LocationViewModel
             {
                 Id = location.Id,
                 Name = location.Name,
                 Address = location.Address,
                 Capacity = location.Capacity
-            };
-
-            return View(model);
+            });
         }
 
         [HttpPost]
@@ -121,28 +118,18 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var location = await _context.Locations.FindAsync(id);
-            if (location == null)
+            var ok = await _referencesApiClient.UpdateLocationAsync(id, new LocationDto
             {
-                return NotFound();
-            }
+                Id = model.Id,
+                Name = model.Name,
+                Address = model.Address,
+                Capacity = model.Capacity
+            });
 
-            location.Name = model.Name;
-            location.Address = model.Address;
-            location.Capacity = model.Capacity;
-
-            try
+            if (!ok)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Locations.Any(e => e.Id == model.Id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                ModelState.AddModelError(string.Empty, "Greška pri izmeni lokacije.");
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
@@ -155,36 +142,26 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var location = await _context.Locations
-                .Where(m => m.Id == id)
-                .Select(m => new LocationViewModel
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Address = m.Address,
-                    Capacity = m.Capacity
-                })
-                .FirstOrDefaultAsync();
-
+            var location = await _referencesApiClient.GetLocationByIdAsync(id.Value);
             if (location == null)
             {
                 return NotFound();
             }
 
-            return View(location);
+            return View(new LocationViewModel
+            {
+                Id = location.Id,
+                Name = location.Name,
+                Address = location.Address,
+                Capacity = location.Capacity
+            });
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var location = await _context.Locations.FindAsync(id);
-            if (location != null)
-            {
-                _context.Locations.Remove(location);
-                await _context.SaveChangesAsync();
-            }
-
+            await _referencesApiClient.DeleteLocationAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

@@ -1,23 +1,22 @@
-using EventPlatformAPI.Web.Data;
-using EventPlatformAPI.Web.Domains;
+using EventPlatformAPI.DTO;
+using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.EventTypes;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.Web.Controllers
 {
     public class EventTypesController : Controller
     {
-        private readonly PlatformDbContext _context;
+        private readonly IEventsApiClient _eventsApiClient;
 
-        public EventTypesController(PlatformDbContext context)
+        public EventTypesController(IEventsApiClient eventsApiClient)
         {
-            _context = context;
+            _eventsApiClient = eventsApiClient;
         }
 
         public async Task<IActionResult> Index()
         {
-            var models = await _context.EventTypes
+            var models = (await _eventsApiClient.GetEventTypesAsync())
                 .OrderBy(t => t.Name)
                 .Select(t => new EventTypeViewModel
                 {
@@ -25,7 +24,7 @@ namespace EventPlatformAPI.Web.Controllers
                     Name = t.Name,
                     Description = t.Description
                 })
-                .ToListAsync();
+                .ToList();
 
             return View(models);
         }
@@ -37,22 +36,18 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var eventType = await _context.EventTypes
-                .Where(m => m.Id == id)
-                .Select(m => new EventTypeViewModel
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Description = m.Description
-                })
-                .FirstOrDefaultAsync();
-
+            var eventType = await _eventsApiClient.GetEventTypeByIdAsync(id.Value);
             if (eventType == null)
             {
                 return NotFound();
             }
 
-            return View(eventType);
+            return View(new EventTypeViewModel
+            {
+                Id = eventType.Id,
+                Name = eventType.Name,
+                Description = eventType.Description
+            });
         }
 
         public IActionResult Create()
@@ -69,14 +64,18 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var eventType = new EventType
+            var ok = await _eventsApiClient.CreateEventTypeAsync(new EventTypeDto
             {
                 Name = model.Name,
                 Description = model.Description
-            };
+            });
 
-            _context.Add(eventType);
-            await _context.SaveChangesAsync();
+            if (!ok)
+            {
+                ModelState.AddModelError(string.Empty, "Greška pri ?uvanju tipa doga?aja.");
+                return View(model);
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -87,20 +86,18 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var eventType = await _context.EventTypes.FindAsync(id);
+            var eventType = await _eventsApiClient.GetEventTypeByIdAsync(id.Value);
             if (eventType == null)
             {
                 return NotFound();
             }
 
-            var model = new EventTypeViewModel
+            return View(new EventTypeViewModel
             {
                 Id = eventType.Id,
                 Name = eventType.Name,
                 Description = eventType.Description
-            };
-
-            return View(model);
+            });
         }
 
         [HttpPost]
@@ -117,27 +114,17 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
 
-            var eventType = await _context.EventTypes.FindAsync(id);
-            if (eventType == null)
+            var ok = await _eventsApiClient.UpdateEventTypeAsync(id, new EventTypeDto
             {
-                return NotFound();
-            }
+                Id = model.Id,
+                Name = model.Name,
+                Description = model.Description
+            });
 
-            eventType.Name = model.Name;
-            eventType.Description = model.Description;
-
-            try
+            if (!ok)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.EventTypes.Any(e => e.Id == model.Id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                ModelState.AddModelError(string.Empty, "Greška pri izmeni tipa doga?aja.");
+                return View(model);
             }
 
             return RedirectToAction(nameof(Index));
@@ -150,35 +137,25 @@ namespace EventPlatformAPI.Web.Controllers
                 return NotFound();
             }
 
-            var eventType = await _context.EventTypes
-                .Where(m => m.Id == id)
-                .Select(m => new EventTypeViewModel
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Description = m.Description
-                })
-                .FirstOrDefaultAsync();
-
+            var eventType = await _eventsApiClient.GetEventTypeByIdAsync(id.Value);
             if (eventType == null)
             {
                 return NotFound();
             }
 
-            return View(eventType);
+            return View(new EventTypeViewModel
+            {
+                Id = eventType.Id,
+                Name = eventType.Name,
+                Description = eventType.Description
+            });
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var eventType = await _context.EventTypes.FindAsync(id);
-            if (eventType != null)
-            {
-                _context.EventTypes.Remove(eventType);
-                await _context.SaveChangesAsync();
-            }
-
+            await _eventsApiClient.DeleteEventTypeAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }
