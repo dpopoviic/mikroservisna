@@ -1,3 +1,4 @@
+using EventPlatformAPI.Web.Patterns;
 using EventPlatformAPI.Web.Services;
 using Polly;
 using Polly.Timeout;
@@ -5,7 +6,10 @@ using Polly.Timeout;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddSingleton<CircuitBreaker>(sp =>
+{
+    return new CircuitBreaker(failureTrashold: 3, openDuration: TimeSpan.FromSeconds(30));
+});
 var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(
     TimeSpan.FromSeconds(5));
 

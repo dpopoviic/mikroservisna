@@ -1,4 +1,5 @@
 using EventPlatformAPI.DTO;
+using EventPlatformAPI.Web.Patterns;
 using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.Lecturers;
 using Microsoft.AspNetCore.Mvc;
@@ -9,17 +10,19 @@ namespace EventPlatformAPI.Web.Controllers
     public class LecturersController : Controller
     {
         private readonly IReferencesApiClient _referencesApiClient;
+        private readonly CircuitBreaker _circuitBreaker;
 
-        public LecturersController(IReferencesApiClient referencesApiClient)
+        public LecturersController(IReferencesApiClient referencesApiClient, CircuitBreaker circuitBreaker)
         {
             _referencesApiClient = referencesApiClient;
+            _circuitBreaker = circuitBreaker;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                var models = (await _referencesApiClient.GetLecturersAsync())
+                var models = (await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLecturersAsync()))
                     .OrderBy(l => l.LastName)
                     .ThenBy(l => l.FirstName)
                     .Select(l => new LecturerViewModel
@@ -33,6 +36,11 @@ namespace EventPlatformAPI.Web.Controllers
                     .ToList();
 
                 return View(models);
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View(new List<LecturerViewModel>());
             }
             catch (TimeoutRejectedException)
             {
@@ -50,7 +58,7 @@ namespace EventPlatformAPI.Web.Controllers
                     return NotFound();
                 }
 
-                var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
+                var lecturer = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLecturerByIdAsync(id.Value));
                 if (lecturer == null)
                 {
                     return NotFound();
@@ -64,6 +72,11 @@ namespace EventPlatformAPI.Web.Controllers
                     Title = lecturer.Title,
                     Field = lecturer.Field
                 });
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View();
             }
             catch (TimeoutRejectedException)
             {
@@ -88,13 +101,13 @@ namespace EventPlatformAPI.Web.Controllers
                     return View(model);
                 }
 
-                var ok = await _referencesApiClient.CreateLecturerAsync(new LecturerDto
+                var ok = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.CreateLecturerAsync(new LecturerDto
                 {
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     Title = model.Title,
                     Field = model.Field
-                });
+                }));
 
                 if (!ok)
                 {
@@ -103,6 +116,11 @@ namespace EventPlatformAPI.Web.Controllers
                 }
 
                 return RedirectToAction(nameof(Index));
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View(model);
             }
             catch (TimeoutRejectedException)
             {
@@ -120,7 +138,7 @@ namespace EventPlatformAPI.Web.Controllers
                     return NotFound();
                 }
 
-                var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
+                var lecturer = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLecturerByIdAsync(id.Value));
                 if (lecturer == null)
                 {
                     return NotFound();
@@ -134,6 +152,11 @@ namespace EventPlatformAPI.Web.Controllers
                     Title = lecturer.Title,
                     Field = lecturer.Field
                 });
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View();
             }
             catch (TimeoutRejectedException)
             {
@@ -158,14 +181,14 @@ namespace EventPlatformAPI.Web.Controllers
                     return View(model);
                 }
 
-                var ok = await _referencesApiClient.UpdateLecturerAsync(id, new LecturerDto
+                var ok = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.UpdateLecturerAsync(id, new LecturerDto
                 {
                     Id = model.Id,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     Title = model.Title,
                     Field = model.Field
-                });
+                }));
 
                 if (!ok)
                 {
@@ -174,6 +197,11 @@ namespace EventPlatformAPI.Web.Controllers
                 }
 
                 return RedirectToAction(nameof(Index));
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View(model);
             }
             catch (TimeoutRejectedException)
             {
@@ -191,7 +219,7 @@ namespace EventPlatformAPI.Web.Controllers
                     return NotFound();
                 }
 
-                var lecturer = await _referencesApiClient.GetLecturerByIdAsync(id.Value);
+                var lecturer = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLecturerByIdAsync(id.Value));
                 if (lecturer == null)
                 {
                     return NotFound();
@@ -206,6 +234,11 @@ namespace EventPlatformAPI.Web.Controllers
                     Field = lecturer.Field
                 });
             }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
+                return View();
+            }
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
@@ -219,7 +252,12 @@ namespace EventPlatformAPI.Web.Controllers
         {
             try
             {
-                await _referencesApiClient.DeleteLecturerAsync(id);
+                await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.DeleteLecturerAsync(id));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (CircuitBreakerOpenException)
+            {
+                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan.");
                 return RedirectToAction(nameof(Index));
             }
             catch (TimeoutRejectedException)
@@ -227,6 +265,11 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return RedirectToAction(nameof(Index));
             }
+        }
+
+        private Task<T> ExecuteWithCircuitBreakerAsync<T>(Func<Task<T>> action)
+        {
+            return _circuitBreaker.ExecuteAsync(action);
         }
     }
 }
