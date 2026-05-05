@@ -2,7 +2,6 @@ using EventPlatformAPI.DTO;
 using EventPlatformAPI.Web.Services;
 using EventPlatformAPI.Web.ViewModels.Locations;
 using Microsoft.AspNetCore.Mvc;
-using Polly.CircuitBreaker;
 using Polly.Timeout;
 
 namespace EventPlatformAPI.Web.Controllers
@@ -38,11 +37,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View(new List<LocationViewModel>());
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View(new List<LocationViewModel>());
-            }
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -71,11 +65,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return View();
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return View();
             }
         }
@@ -116,11 +105,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View(model);
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View(model);
-            }
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -149,11 +133,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return View();
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return View();
             }
         }
@@ -195,11 +174,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View(model);
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View(model);
-            }
         }
 
         public async Task<IActionResult> Delete(int? id)
@@ -230,11 +204,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View();
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View();
-            }
         }
 
         [HttpPost, ActionName("Delete")]
@@ -249,11 +218,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return RedirectToAction(nameof(Index));
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return RedirectToAction(nameof(Index));
             }
         }

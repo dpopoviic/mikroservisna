@@ -4,7 +4,6 @@ using EventPlatformAPI.Web.ViewModels.Events;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Polly.CircuitBreaker;
 using Polly.Timeout;
 
 namespace EventPlatformAPI.Web.Controllers
@@ -52,11 +51,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return View(new List<EventViewModel>());
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return View(new List<EventViewModel>());
             }
             catch (HttpRequestException ex)
@@ -117,11 +111,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View();
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View();
-            }
         }
 
         public async Task<IActionResult> Create()
@@ -134,11 +123,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return View();
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return View();
             }
         }
@@ -186,12 +170,6 @@ namespace EventPlatformAPI.Web.Controllers
                 await PopulateDropdowns(model.TypeId, model.LocationId);
                 return View(model);
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                await PopulateDropdowns(model.TypeId, model.LocationId);
-                return View(model);
-            }
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -227,11 +205,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return View();
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return View();
             }
         }
@@ -284,12 +257,6 @@ namespace EventPlatformAPI.Web.Controllers
                 await PopulateDropdowns(model.TypeId, model.LocationId);
                 return View(model);
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                await PopulateDropdowns(model.TypeId, model.LocationId);
-                return View(model);
-            }
         }
 
         public async Task<IActionResult> Delete(int? id)
@@ -328,11 +295,6 @@ namespace EventPlatformAPI.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
                 return View();
             }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
-                return View();
-            }
         }
 
         [HttpPost, ActionName("Delete")]
@@ -347,11 +309,6 @@ namespace EventPlatformAPI.Web.Controllers
             catch (TimeoutRejectedException)
             {
                 ModelState.AddModelError(string.Empty, "Zahtev je istekao. Servis ne odgovara.");
-                return RedirectToAction(nameof(Index));
-            }
-            catch (BrokenCircuitException)
-            {
-                ModelState.AddModelError(string.Empty, "Servis je privremeno nedostupan. Pokušajte kasnije.");
                 return RedirectToAction(nameof(Index));
             }
         }

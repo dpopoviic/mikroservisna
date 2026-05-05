@@ -1,6 +1,5 @@
 using EventPlatformAPI.Web.Services;
 using Polly;
-using Polly.CircuitBreaker;
 using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,25 +23,7 @@ var retryPolicy = Policy
             System.Diagnostics.Debug.WriteLine(message);
         });
 
-var circuitBreakerPolicy = Policy
-    .Handle<HttpRequestException>()
-    .Or<OperationCanceledException>()
-    .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500)
-    .CircuitBreakerAsync<HttpResponseMessage>(
-        handledEventsAllowedBeforeBreaking: 5,
-        durationOfBreak: TimeSpan.FromSeconds(30),
-        onBreak: (outcome, timespan) =>
-        {
-            System.Diagnostics.Debug.WriteLine(
-                $"Circuit breaker OPEN for {timespan.TotalSeconds}s due to: {outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()}");
-        },
-        onReset: () =>
-        {
-            System.Diagnostics.Debug.WriteLine("Circuit breaker RESET - service recovered!");
-        });
-
-
-var combinedPolicy = Policy.WrapAsync(timeoutPolicy, retryPolicy, circuitBreakerPolicy);
+var combinedPolicy = Policy.WrapAsync(timeoutPolicy, retryPolicy);
 
 builder.Services.AddHttpClient<IEventsApiClient, EventsApiClient>(client =>
 {
