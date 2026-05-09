@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventPlatformAPI.DTO", "Eve
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventPlatformAPI.ReferencesAPI", "EventPlatformAPI.ReferencesAPI\EventPlatformAPI.ReferencesAPI.csproj", "{42C9F555-E551-481A-BE84-14818EE8D6C2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventPlatformAPI.Messages", "EventPlatformAPI.Messages\EventPlatformAPI.Messages.csproj", "{62FB410B-B4DE-411F-AEA0-FF4FDF97B14E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{42C9F555-E551-481A-BE84-14818EE8D6C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42C9F555-E551-481A-BE84-14818EE8D6C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42C9F555-E551-481A-BE84-14818EE8D6C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62FB410B-B4DE-411F-AEA0-FF4FDF97B14E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62FB410B-B4DE-411F-AEA0-FF4FDF97B14E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62FB410B-B4DE-411F-AEA0-FF4FDF97B14E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62FB410B-B4DE-411F-AEA0-FF4FDF97B14E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
