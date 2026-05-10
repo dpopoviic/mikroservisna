@@ -1,4 +1,5 @@
 using EventPlatformAPI.EventsAPI.Data;
+using EventPlatformAPI.EventsAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,11 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<EventsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("EventsConnection")));
+
+// RabbitMQ options
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+
+builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
 
 var app = builder.Build();
 
