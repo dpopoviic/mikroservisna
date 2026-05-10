@@ -1,8 +1,10 @@
 using EventPlatformAPI.DTO;
+using EventPlatformAPI.Messages.IntegrationEvents;
 using EventPlatformAPI.ReferencesAPI.Data;
 using EventPlatformAPI.ReferencesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EventPlatformAPI.ReferencesAPI.Controllers;
 
@@ -57,27 +59,61 @@ public class LecturersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LecturerDto>> Create(LecturerDto request)
     {
-        var entity = new Lecturer
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Title = request.Title,
-            Field = request.Field
-        };
+            var entity = new Lecturer
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Title = request.Title,
+                Field = request.Field
+            };
 
-        _context.Lecturers.Add(entity);
-        await _context.SaveChangesAsync();
+            _context.Lecturers.Add(entity);
+            await _context.SaveChangesAsync();
 
-        var response = new LecturerDto
+            var evt = new LecturerCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LecturerId = entity.Id,
+                FirstName = entity.FirstName,
+                LastName = entity.LastName,
+                Title = entity.Title
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "lecturer.created",
+                Type = nameof(LecturerCreatedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            var response = new LecturerDto
+            {
+                Id = entity.Id,
+                FirstName = entity.FirstName,
+                LastName = entity.LastName,
+                Title = entity.Title,
+                Field = entity.Field
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
+        }
+        catch (Exception)
         {
-            Id = entity.Id,
-            FirstName = entity.FirstName,
-            LastName = entity.LastName,
-            Title = entity.Title,
-            Field = entity.Field
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -89,13 +125,48 @@ public class LecturersController : ControllerBase
             return NotFound();
         }
 
-        entity.FirstName = request.FirstName;
-        entity.LastName = request.LastName;
-        entity.Title = request.Title;
-        entity.Field = request.Field;
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            entity.FirstName = request.FirstName;
+            entity.LastName = request.LastName;
+            entity.Title = request.Title;
+            entity.Field = request.Field;
 
-        await _context.SaveChangesAsync();
-        return NoContent();
+            await _context.SaveChangesAsync();
+
+            var evt = new LecturerUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LecturerId = entity.Id,
+                FirstName = entity.FirstName,
+                LastName = entity.LastName,
+                Title = entity.Title
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "lecturer.updated",
+                Type = nameof(LecturerUpdatedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -107,8 +178,40 @@ public class LecturersController : ControllerBase
             return NotFound();
         }
 
-        _context.Lecturers.Remove(entity);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Lecturers.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            var evt = new LecturerDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LecturerId = entity.Id
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "lecturer.deleted",
+                Type = nameof(LecturerDeletedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
