@@ -18,6 +18,7 @@ builder.Services.AddDbContext<EventsDbContext>(options =>
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 
 builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
+builder.Services.AddSingleton<ReferencesValidationRequestClient>();
 
 var app = builder.Build();
 

@@ -17,6 +17,7 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
+builder.Services.AddHostedService<ReferencesValidationConsumerHostedService>();
 
 var app = builder.Build();
 

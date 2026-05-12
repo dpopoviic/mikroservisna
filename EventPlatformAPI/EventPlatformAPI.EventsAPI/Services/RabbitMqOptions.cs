@@ -11,5 +11,7 @@ namespace EventPlatformAPI.EventsAPI.Services
         public string Queue { get; set; } = "references.events.queue";
         public string RoutingKey { get; set; } = "reference.changed";
         public ushort PrefetchCount { get; set; } = 1;
+        public string ValidationRequestQueue { get; set; } = "references.validate.request";
+        public string ValidationReplyQueue { get; set; } = "events.references.validate.reply";
     }
 }

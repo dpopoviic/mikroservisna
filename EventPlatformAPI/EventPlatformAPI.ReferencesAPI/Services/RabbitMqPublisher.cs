@@ -13,6 +13,7 @@ namespace EventPlatformAPI.ReferencesAPI.Services
         public string Exchange { get; set; } = "references.events";
         public string RoutingKey { get; set; } = "reference.changed";
         public string Queue { get; set; } = "references.events.queue";
+        public string ValidationRequestQueue { get; set; } = "references.validate.request";
     }
 
     public interface IRabbitMqPublisher
@@ -60,12 +61,11 @@ namespace EventPlatformAPI.ReferencesAPI.Services
 
             await _channel.BasicPublishAsync(
                 exchange: _options.Exchange,
-                routingKey: _options.RoutingKey,
+                routingKey: destination,
                 mandatory: true,
                 basicProperties: properties,
                 body: body,
                 cancellationToken: cancellationToken);
-
         }
 
         private async Task EnsureInitializedAsync(CancellationToken cancellationToken)
@@ -81,18 +81,18 @@ namespace EventPlatformAPI.ReferencesAPI.Services
                 if (_channel is not null)
                     return;
 
-                _connection = await _factory.CreateConnectionAsync();
-                _channel = await _connection.CreateChannelAsync();
+                _connection = await _factory.CreateConnectionAsync(cancellationToken);
+                _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
                 await _channel.ExchangeDeclareAsync(
-                   exchange: _options.Exchange,
-                   type: ExchangeType.Direct,
-                   durable: true,
-                   autoDelete: false,
-                   cancellationToken: cancellationToken);
+                    exchange: _options.Exchange,
+                    type: ExchangeType.Topic,
+                    durable: true,
+                    autoDelete: false,
+                    cancellationToken: cancellationToken);
 
                 await _channel.QueueDeclareAsync(queue: _options.Queue, durable: true, exclusive: false, autoDelete: false, arguments: null);
-                await _channel.QueueBindAsync(queue: _options.Queue, exchange: _options.Exchange, routingKey: _options.RoutingKey);
+                await _channel.QueueBindAsync(queue: _options.Queue, exchange: _options.Exchange, routingKey: "#", cancellationToken: cancellationToken);
             }
             finally
             {
