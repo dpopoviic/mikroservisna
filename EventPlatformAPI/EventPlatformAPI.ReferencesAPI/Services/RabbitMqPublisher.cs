@@ -86,7 +86,7 @@ namespace EventPlatformAPI.ReferencesAPI.Services
 
                 await _channel.ExchangeDeclareAsync(
                     exchange: _options.Exchange,
-                    type: ExchangeType.Topic,
+                    type: ExchangeType.Direct,
                     durable: true,
                     autoDelete: false,
                     cancellationToken: cancellationToken);

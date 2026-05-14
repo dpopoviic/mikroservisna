@@ -2,13 +2,14 @@ using System.Text;
 using System.Text.Json;
 using EventPlatformAPI.EventsAPI.Data;
 using EventPlatformAPI.EventsAPI.Models;
+using EventPlatformAPI.EventsAPI.Services;
 using EventPlatformAPI.Messages.IntegrationEvents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace EventPlatformAPI.EventsAPI.Services;
+namespace EventPlatformAPI.EventsAPI.HostedServices;
 
 public sealed class RabbitMqConsumerHostedService : BackgroundService
 {
@@ -98,7 +99,6 @@ public sealed class RabbitMqConsumerHostedService : BackgroundService
 
             var eventType = ea.BasicProperties.Type ?? string.Empty;
 
-            // Parse message id
             var messageId = ea.BasicProperties.MessageId ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(messageId))

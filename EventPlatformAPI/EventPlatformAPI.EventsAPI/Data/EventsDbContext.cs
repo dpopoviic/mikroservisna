@@ -17,6 +17,8 @@ public class EventsDbContext : DbContext
     public DbSet<LocationSnapshot> LocationSnapshots => Set<LocationSnapshot>();
     public DbSet<LecturerSnapshot> LecturerSnapshots => Set<LecturerSnapshot>();
 
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -89,6 +91,14 @@ public class EventsDbContext : DbContext
             entity.Property(x => x.Title).HasMaxLength(100);
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.ExternalId).IsUnique();
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("OutboxMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Payload).IsRequired();
+            entity.HasIndex(x => new { x.IsPublished, x.CreatedAtUtc });
         });
     }
 }

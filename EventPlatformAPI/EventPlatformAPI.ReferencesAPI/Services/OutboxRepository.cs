@@ -12,7 +12,7 @@ namespace EventPlatformAPI.ReferencesAPI.Services
         {
             _db = db;
         }
-
+        //ne sluzi nicemu
         public async Task AddOutboxMessageAsync(OutboxMessage message, CancellationToken ct = default)
         {
             _db.OutboxMessages.Add(message);

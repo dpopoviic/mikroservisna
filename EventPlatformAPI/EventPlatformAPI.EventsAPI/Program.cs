@@ -1,5 +1,6 @@
 using EventPlatformAPI.EventsAPI.Data;
 using EventPlatformAPI.EventsAPI.Services;
+using EventPlatformAPI.EventsAPI.HostedServices;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 
 builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
 builder.Services.AddSingleton<ReferencesValidationRequestClient>();
+builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
+builder.Services.AddHostedService<OutboxDispatcherHostedService>();
 
 var app = builder.Build();
 

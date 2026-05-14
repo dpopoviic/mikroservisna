@@ -4,6 +4,7 @@ using EventPlatformAPI.ReferencesAPI.Data;
 using EventPlatformAPI.ReferencesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 
 namespace EventPlatformAPI.ReferencesAPI.Controllers;
@@ -13,6 +14,7 @@ namespace EventPlatformAPI.ReferencesAPI.Controllers;
 public class LocationsController : ControllerBase
 {
     private readonly ReferenceDbContext _context;
+    //private static int _counter = 0;
 
     public LocationsController(ReferenceDbContext context)
     {
@@ -22,6 +24,11 @@ public class LocationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LocationDto>>> GetAll()
     {
+        //_counter++;
+
+        //if (_counter % 4 != 0)
+        //    return StatusCode(500, "Simulated server error");
+
         var locations = await _context.Locations
             .OrderBy(x => x.Name)
             .Select(x => new LocationDto
