@@ -186,7 +186,7 @@ public sealed class EmailQueueConsumerHostedService : BackgroundService
             if (waitTime > TimeSpan.Zero)
             {
                 _logger.LogInformation("Throttling applied. Waiting {WaitMs}ms before processing next email.", (long)waitTime.TotalMilliseconds);
-                await Task.Delay(waitTime, cancellationToken); // ← FIX: originalna klasa nije imala await ovde!
+                await Task.Delay(waitTime, cancellationToken); 
             }
         }
     }
