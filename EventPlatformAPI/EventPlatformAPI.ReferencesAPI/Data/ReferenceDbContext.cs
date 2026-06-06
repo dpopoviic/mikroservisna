@@ -11,6 +11,7 @@ public class ReferenceDbContext : DbContext
 
     public DbSet<Lecturer> Lecturers => Set<Lecturer>();
     public DbSet<Location> Locations => Set<Location>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,6 +41,14 @@ public class ReferenceDbContext : DbContext
             entity.HasData(
                 new Location { Id = 1, Name = "Amfiteatar A", Address = "Bulevar kralja Aleksandra 73", Capacity = 200 },
                 new Location { Id = 2, Name = "Sala 101", Address = "Kraljice Marije 16", Capacity = 80 });
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("OutboxMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Payload).IsRequired();
+            entity.HasIndex(x => new { x.IsPublished, x.CreatedAt });
         });
     }
 }

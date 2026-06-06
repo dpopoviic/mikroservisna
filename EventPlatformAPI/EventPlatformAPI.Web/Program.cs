@@ -6,6 +6,12 @@ using Polly.Timeout;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.AddDebug();
+});
+
 builder.Services.AddSingleton<CircuitBreaker>(sp =>
 {
     return new CircuitBreaker(failureTrashold: 3, openDuration: TimeSpan.FromSeconds(30));
@@ -24,6 +30,7 @@ var retryPolicy = Policy
         {
             var message = $"Retry attempt {retryCount}: waiting {timespan.TotalSeconds}s. " +
                 $"Reason: {(outcome.Exception?.GetType().Name ?? outcome.Result?.StatusCode.ToString() ?? "Unknown")}";
+            Console.WriteLine(message);
             System.Diagnostics.Debug.WriteLine(message);
         });
 

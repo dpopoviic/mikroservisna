@@ -1,8 +1,11 @@
 ﻿using EventPlatformAPI.DTO;
 using EventPlatformAPI.EventsAPI.Data;
 using EventPlatformAPI.EventsAPI.Models;
+using EventPlatformAPI.EventsAPI.Services;
+using EventPlatformAPI.Messages.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EventPlatformAPI.EventsAPI.Controllers;
 
@@ -11,10 +14,12 @@ namespace EventPlatformAPI.EventsAPI.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly EventsDbContext _context;
+    private readonly ReferencesValidationRequestClient _validationClient;
 
-    public EventsController(EventsDbContext context)
+    public EventsController(EventsDbContext context, ReferencesValidationRequestClient validationClient)
     {
         _context = context;
+        _validationClient = validationClient;
     }
 
     [HttpGet]
@@ -101,6 +106,29 @@ public class EventsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
+        ValidateReferencesResponse validationResult;
+        try
+        {
+            validationResult = await _validationClient.SendValidateRequestAsync(
+                new ValidateReferencesRequest
+                {
+                    LocationId = request.LocationId
+                },
+                TimeSpan.FromSeconds(10),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Greška pri validaciji referenci: {ex.Message}");
+            return ValidationProblem(ModelState);
+        }
+
+        if (!validationResult.IsValid)
+        {
+            ModelState.AddModelError(string.Empty, validationResult.Reason ?? "Validacija referenci nije uspela.");
+            return ValidationProblem(ModelState);
+        }
+
         var entity = new Event
         {
             Name = request.Name,
@@ -113,6 +141,32 @@ public class EventsController : ControllerBase
         };
 
         _context.Events.Add(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var locationSnapshot = await _context.LocationSnapshots
+            .FirstOrDefaultAsync(x => x.ExternalId == request.LocationId, cancellationToken);
+        var locationName = locationSnapshot?.Name ?? "Unknown Location";
+
+        var emailMessage = new EmailRequestMessage
+        {
+            MessageId = Guid.NewGuid(),
+            To = "org@example.com",
+            Subject = $"Kreiran novi događaj: {entity.Name}",
+            Body = $"Događaj {entity.Name} dana {entity.DateTime:dd.MM.yyyy HH:mm} na lokaciji {locationName}",
+            EnqueuedAt = DateTime.UtcNow
+        };
+
+        var outboxMessage = new OutboxMessage
+        {
+            MessageId = Guid.NewGuid(),
+            Destination = "email.requests",
+            Type = nameof(EmailRequestMessage),
+            Payload = System.Text.Json.JsonSerializer.Serialize(emailMessage),
+            CreatedAtUtc = DateTime.UtcNow,
+            IsPublished = false
+        };
+
+        _context.OutboxMessages.Add(outboxMessage);
         await _context.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, new EventDetailsDto

@@ -13,6 +13,12 @@ public class EventsDbContext : DbContext
     public DbSet<EventType> EventTypes => Set<EventType>();
     public DbSet<EventLecturer> EventLecturers => Set<EventLecturer>();
 
+    public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
+    public DbSet<LocationSnapshot> LocationSnapshots => Set<LocationSnapshot>();
+    public DbSet<LecturerSnapshot> LecturerSnapshots => Set<LecturerSnapshot>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -51,6 +57,48 @@ public class EventsDbContext : DbContext
                 .WithMany(x => x.EventLecturers)
                 .HasForeignKey(x => x.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProcessedMessage>(entity =>
+        {
+            entity.ToTable("ProcessedMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EventId).IsRequired();
+            entity.Property(x => x.EventType).HasMaxLength(200);
+            entity.Property(x => x.ProcessedAtUtc).IsRequired();
+            entity.HasIndex(x => x.EventId).IsUnique();
+        });
+
+        modelBuilder.Entity<LocationSnapshot>(entity =>
+        {
+            entity.ToTable("LocationSnapshots");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ExternalId).IsRequired();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Address).HasMaxLength(300);
+            entity.Property(x => x.Capacity).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(x => x.ExternalId).IsUnique();
+        });
+
+        modelBuilder.Entity<LecturerSnapshot>(entity =>
+        {
+            entity.ToTable("LecturerSnapshots");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ExternalId).IsRequired();
+            entity.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Title).HasMaxLength(100);
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(x => x.ExternalId).IsUnique();
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("OutboxMessages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Payload).IsRequired();
+            entity.HasIndex(x => new { x.IsPublished, x.CreatedAtUtc });
         });
     }
 }

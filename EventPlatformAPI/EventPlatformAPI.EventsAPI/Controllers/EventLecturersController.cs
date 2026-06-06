@@ -1,6 +1,8 @@
 ﻿using EventPlatformAPI.DTO;
 using EventPlatformAPI.EventsAPI.Data;
 using EventPlatformAPI.EventsAPI.Models;
+using EventPlatformAPI.EventsAPI.Services;
+using EventPlatformAPI.Messages.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +13,12 @@ namespace EventPlatformAPI.EventsAPI.Controllers;
 public class EventLecturersController : ControllerBase
 {
     private readonly EventsDbContext _context;
+    private readonly ReferencesValidationRequestClient _validationClient;
 
-    public EventLecturersController(EventsDbContext context)
+    public EventLecturersController(EventsDbContext context, ReferencesValidationRequestClient validationClient)
     {
         _context = context;
+        _validationClient = validationClient;
     }
 
     [HttpGet]
@@ -65,7 +69,30 @@ public class EventLecturersController : ControllerBase
         {
             return ValidationProblem(ModelState);
         }
-        //da li treba proveriti postoji li predavac sa datim id-jem?
+
+        ValidateReferencesResponse validationResult;
+        try
+        {
+            validationResult = await _validationClient.SendValidateRequestAsync(
+                new ValidateReferencesRequest
+                {
+                    LecturerIds = [request.LecturerId]
+                },
+                TimeSpan.FromSeconds(10),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Greška pri validaciji predavača: {ex.Message}");
+            return ValidationProblem(ModelState);
+        }
+
+        if (!validationResult.IsValid)
+        {
+            ModelState.AddModelError(nameof(request.LecturerId), validationResult.Reason ?? "Prosleđeni predavač ne postoji.");
+            return ValidationProblem(ModelState);
+        }
+
         var entity = new EventLecturer
         {
             EventId = request.EventId,

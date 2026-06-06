@@ -1,8 +1,11 @@
 using EventPlatformAPI.DTO;
+using EventPlatformAPI.Messages.IntegrationEvents;
 using EventPlatformAPI.ReferencesAPI.Data;
 using EventPlatformAPI.ReferencesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Metrics;
+using System.Text.Json;
 
 namespace EventPlatformAPI.ReferencesAPI.Controllers;
 
@@ -11,6 +14,7 @@ namespace EventPlatformAPI.ReferencesAPI.Controllers;
 public class LocationsController : ControllerBase
 {
     private readonly ReferenceDbContext _context;
+    //private static int _counter = 0;
 
     public LocationsController(ReferenceDbContext context)
     {
@@ -20,6 +24,11 @@ public class LocationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<LocationDto>>> GetAll()
     {
+        //_counter++;
+
+        //if (_counter % 4 != 0)
+        //    return StatusCode(500, "Simulated server error");
+
         var locations = await _context.Locations
             .OrderBy(x => x.Name)
             .Select(x => new LocationDto
@@ -54,25 +63,59 @@ public class LocationsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LocationDto>> Create(LocationDto request)
     {
-        var entity = new Location
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            Name = request.Name,
-            Address = request.Address,
-            Capacity = request.Capacity
-        };
+            var entity = new Location
+            {
+                Name = request.Name,
+                Address = request.Address,
+                Capacity = request.Capacity
+            };
 
-        _context.Locations.Add(entity);
-        await _context.SaveChangesAsync();
+            _context.Locations.Add(entity);
+            await _context.SaveChangesAsync();
 
-        var response = new LocationDto
+            var evt = new LocationCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LocationId = entity.Id,
+                Name = entity.Name,
+                Address = entity.Address,
+                Capacity = entity.Capacity
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "location.created",
+                Type = nameof(LocationCreatedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            var response = new LocationDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Address = entity.Address,
+                Capacity = entity.Capacity
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
+        }
+        catch (Exception)
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            Address = entity.Address,
-            Capacity = entity.Capacity
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -84,12 +127,47 @@ public class LocationsController : ControllerBase
             return NotFound();
         }
 
-        entity.Name = request.Name;
-        entity.Address = request.Address;
-        entity.Capacity = request.Capacity;
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            entity.Name = request.Name;
+            entity.Address = request.Address;
+            entity.Capacity = request.Capacity;
 
-        await _context.SaveChangesAsync();
-        return NoContent();
+            await _context.SaveChangesAsync();
+
+            var evt = new LocationUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LocationId = entity.Id,
+                Name = entity.Name,
+                Address = entity.Address,
+                Capacity = entity.Capacity
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "location.updated",
+                Type = nameof(LocationUpdatedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -101,8 +179,40 @@ public class LocationsController : ControllerBase
             return NotFound();
         }
 
-        _context.Locations.Remove(entity);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Locations.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            var evt = new LocationDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                LocationId = entity.Id
+            };
+
+            var outbox = new OutboxMessage
+            {
+                MessageId = Guid.NewGuid(),
+                Destination = "location.deleted",
+                Type = nameof(LocationDeletedEvent),
+                Payload = JsonSerializer.Serialize(evt),
+                CreatedAt = DateTime.UtcNow,
+                IsPublished = false
+            };
+
+            _context.OutboxMessages.Add(outbox);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
