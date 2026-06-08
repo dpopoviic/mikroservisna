@@ -18,7 +18,9 @@ public class EventsDbContext : DbContext
     public DbSet<LecturerSnapshot> LecturerSnapshots => Set<LecturerSnapshot>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-
+    public DbSet<Registration> Registrations => Set<Registration>();
+    public DbSet<RegistrationSagaState> RegistrationSagaStates => Set<RegistrationSagaState>();
+    public DbSet<SagaEventLog> SagaEventLogs => Set<SagaEventLog>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -99,6 +101,41 @@ public class EventsDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Payload).IsRequired();
             entity.HasIndex(x => new { x.IsPublished, x.CreatedAtUtc });
+        });
+        modelBuilder.Entity<Registration>(entity =>
+       {
+           entity.ToTable("Registrations");
+           entity.HasKey(x => x.Id);
+           entity.Property(x => x.ParticipantName).IsRequired().HasMaxLength(200);
+           entity.Property(x => x.ParticipantEmail).IsRequired().HasMaxLength(300);
+           entity.Property(x => x.Status).IsRequired();
+           entity.Property(x => x.CreatedAt).IsRequired();
+           entity.HasOne(x => x.Event)
+               .WithMany()
+               .HasForeignKey(x => x.EventId)
+               .OnDelete(DeleteBehavior.Restrict);
+       });
+
+        modelBuilder.Entity<RegistrationSagaState>(entity =>
+        {
+            entity.ToTable("RegistrationSagaStates");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CorrelationId).IsRequired();
+            entity.Property(x => x.RegistrationId).IsRequired();
+            entity.Property(x => x.CurrentState).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.FailureReason).HasMaxLength(1000);
+            entity.HasIndex(x => x.CorrelationId).IsUnique();
+            entity.HasIndex(x => x.RegistrationId).IsUnique();
+        });
+
+        modelBuilder.Entity<SagaEventLog>(entity =>
+        {
+            entity.ToTable("SagaEventLogs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CorrelationId).IsRequired();
+            entity.Property(x => x.EventName).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Payload).IsRequired();
+            entity.HasIndex(x => x.CorrelationId);
         });
     }
 }
