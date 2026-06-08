@@ -1,11 +1,13 @@
 ﻿using EventPlatformAPI.DTO;
+using EventPlatformAPI.Messages.Commands;
 using EventPlatformAPI.Web.Patterns;
 using EventPlatformAPI.Web.Services;
-using EventPlatformAPI.Web.ViewModels.Events;
 using EventPlatformAPI.Web.ViewModels.EventLecturers;
+using EventPlatformAPI.Web.ViewModels.Events;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Polly.Timeout;
+using System.Text.Json;
 
 namespace EventPlatformAPI.Web.Controllers
 {
@@ -13,13 +15,15 @@ namespace EventPlatformAPI.Web.Controllers
     {
         private readonly IEventsApiClient _eventsApiClient;
         private readonly IReferencesApiClient _referencesApiClient;
+        private readonly ISagaApiClient _sagaApiClient;
         private readonly CircuitBreaker _circuitBreaker;
 
-        public EventsController(IEventsApiClient eventsApiClient, IReferencesApiClient referencesApiClient, CircuitBreaker circuitBreaker)
+        public EventsController(IEventsApiClient eventsApiClient, IReferencesApiClient referencesApiClient, CircuitBreaker circuitBreaker, ISagaApiClient sagaApiClient)
         {
             _eventsApiClient = eventsApiClient;
             _referencesApiClient = referencesApiClient;
             _circuitBreaker = circuitBreaker;
+            _sagaApiClient = sagaApiClient;
         }
 
         public async Task<IActionResult> Index()
@@ -195,7 +199,6 @@ namespace EventPlatformAPI.Web.Controllers
                 return View(model);
             }
         }
-
         public async Task<IActionResult> Edit(int? id)
         {
             try
@@ -358,6 +361,67 @@ namespace EventPlatformAPI.Web.Controllers
             }
         }
 
+        //popraviti logiku
+        public async Task<IActionResult> Publish()
+        {
+            try
+            {
+                await PopulateDropdownsForPublish();
+                return View();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error loading form: {ex.Message}");
+                return View();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Publish(PublishEventViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdownsForPublish(model.TypeId, model.LocationId);
+                return View(model);
+            }
+
+            try
+            {
+                var result = await _sagaApiClient.PublishEventAsync(new PublishEventRequestDto
+                {
+                    Name = model.Name,
+                    Agenda = model.Agenda,
+                    DateTime = model.DateTime,
+                    DurationInHours = model.DurationInHours,
+                    Price = model.Price,
+                    TypeId = model.TypeId,
+                    LocationId = model.LocationId,
+                    LecturerIds = model.SelectedLecturerIds,
+                    OrganizerEmail = model.OrganizerEmail
+                });
+
+                if (result is null)
+                {
+                    ModelState.AddModelError(string.Empty, "Failed to start publish saga. Check that EventsAPI is running.");
+                    await PopulateDropdownsForPublish(model.TypeId, model.LocationId);
+                    return View(model);
+                }
+
+                TempData["SagaCorrelationId"] = result.CorrelationId.ToString();
+                TempData["SagaMessage"] = result.Message;
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                await PopulateDropdownsForPublish(model.TypeId, model.LocationId);
+                return View(model);
+            }
+        }
+
+
         private Task<T> ExecuteWithCircuitBreakerAsync<T>(Func<Task<T>> action)
         {
             return _circuitBreaker.ExecuteAsync(action);
@@ -370,6 +434,16 @@ namespace EventPlatformAPI.Web.Controllers
 
             ViewData["TypeId"] = new SelectList(eventTypes.OrderBy(t => t.Name), "Id", "Name", typeId);
             ViewData["LocationId"] = new SelectList(locations.OrderBy(l => l.Name), "Id", "Name", locationId);
+        }
+        private async Task PopulateDropdownsForPublish(int? typeId = null, int? locationId = null)
+        {
+            var eventTypes = await ExecuteWithCircuitBreakerAsync(() => _eventsApiClient.GetEventTypesAsync());
+            var locations = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLocationsAsync());
+            var lecturers = await ExecuteWithCircuitBreakerAsync(() => _referencesApiClient.GetLecturersAsync());
+
+            ViewData["TypeId"] = new SelectList(eventTypes.OrderBy(t => t.Name), "Id", "Name", typeId);
+            ViewData["LocationId"] = new SelectList(locations.OrderBy(l => l.Name), "Id", "Name", locationId);
+            ViewData["Lecturers"] = new MultiSelectList(lecturers, "Id", "FirstName");
         }
     }
 }

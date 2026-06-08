@@ -60,6 +60,16 @@ builder.Services.AddHttpClient<IReferencesApiClient, ReferencesApiClient>(client
 })
 .AddPolicyHandler(combinedPolicy);
 
+builder.Services.AddHttpClient<ISagaApiClient, SagaApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["ApiEndpoints:EventsApiBaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+        throw new InvalidOperationException("ApiEndpoints:EventsApiBaseUrl nije podešen.");
+
+    client.BaseAddress = new Uri(baseUrl);
+})
+.AddPolicyHandler(combinedPolicy);
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

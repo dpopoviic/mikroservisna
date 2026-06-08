@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EventPlatformAPI.DTO\EventPlatformAPI.DTO.csproj" />
+    <ProjectReference Include="..\EventPlatformAPI.Messages\EventPlatformAPI.Messages.csproj" />
+    <ProjectReference Include="..\EventPlatformAPI.SagaOrcgestrator\EventPlatformAPI.SagaOrcgestrator.csproj" />
   </ItemGroup>
 
 </Project>
