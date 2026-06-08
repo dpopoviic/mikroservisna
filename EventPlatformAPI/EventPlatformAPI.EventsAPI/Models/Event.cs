@@ -8,10 +8,9 @@ public class Event
     public DateTime DateTime { get; set; }
     public decimal DurationInHours { get; set; }
     public decimal Price { get; set; }
-
     public int TypeId { get; set; }
     public int LocationId { get; set; }
-
+    public Guid? CorrelationId { get; set; }
     public EventType? Type { get; set; }
     public ICollection<EventLecturer> EventLecturers { get; set; } = new List<EventLecturer>();
 }

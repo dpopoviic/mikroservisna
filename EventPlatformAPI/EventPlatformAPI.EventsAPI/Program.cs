@@ -21,7 +21,9 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
 builder.Services.AddSingleton<ReferencesValidationRequestClient>();
 builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
+builder.Services.AddSingleton<ISagaTriggerService, SagaTriggerService>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
+builder.Services.AddHostedService<SagaCommandConsumerHostedService>();
 
 var app = builder.Build();
 

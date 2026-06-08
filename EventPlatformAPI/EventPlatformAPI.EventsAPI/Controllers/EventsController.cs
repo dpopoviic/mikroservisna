@@ -2,6 +2,7 @@
 using EventPlatformAPI.EventsAPI.Data;
 using EventPlatformAPI.EventsAPI.Models;
 using EventPlatformAPI.EventsAPI.Services;
+using EventPlatformAPI.Messages.Commands;
 using EventPlatformAPI.Messages.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,13 @@ public class EventsController : ControllerBase
 {
     private readonly EventsDbContext _context;
     private readonly ReferencesValidationRequestClient _validationClient;
+    private readonly ISagaTriggerService _sagaTriggerService;
 
-    public EventsController(EventsDbContext context, ReferencesValidationRequestClient validationClient)
+    public EventsController(EventsDbContext context, ReferencesValidationRequestClient validationClient, ISagaTriggerService sagaTriggerService)
     {
         _context = context;
         _validationClient = validationClient;
+        _sagaTriggerService = sagaTriggerService;
     }
 
     [HttpGet]
@@ -235,5 +238,38 @@ public class EventsController : ControllerBase
         _context.Events.Remove(entity);
         await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("publish")]
+    public async Task<IActionResult> Publish(
+    [FromBody] PublishEventRequestDto dto,
+    CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var correlationId = Guid.NewGuid();
+
+        var command = new StartEventPublicationSagaCommand
+        {
+            CorrelationId = correlationId,
+            Name = dto.Name,
+            Agenda = dto.Agenda,
+            DateTime = dto.DateTime,
+            DurationInHours = dto.DurationInHours,
+            Price = dto.Price,
+            TypeId = dto.TypeId,
+            LocationId = dto.LocationId,
+            LecturerIds = dto.LecturerIds,
+            OrganizerEmail = dto.OrganizerEmail
+        };
+
+        await _sagaTriggerService.TriggerPublishEventAsync(command, ct);
+
+        return Accepted(new PublishEventResultDto
+        {
+            CorrelationId = correlationId,
+            Message = $"Event publish saga started. Track with CorrelationId: {correlationId}"
+        });
     }
 }
