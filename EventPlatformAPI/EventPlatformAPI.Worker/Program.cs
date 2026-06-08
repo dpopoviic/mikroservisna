@@ -9,6 +9,8 @@ builder.ConfigureServices((context, services) =>
     services.Configure<WorkerOptions>(context.Configuration.GetSection("Worker"));
 
     services.AddHostedService<EmailQueueConsumerHostedService>();
+    services.AddHostedService<SagaNotificationConsumerHostedService>();
+
 });
 
 var host = builder.Build();
