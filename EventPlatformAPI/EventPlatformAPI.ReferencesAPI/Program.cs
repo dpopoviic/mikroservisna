@@ -18,6 +18,8 @@ builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
 builder.Services.AddHostedService<ReferencesValidationConsumerHostedService>();
+builder.Services.AddHostedService<SagaValidationConsumerHostedService>();
+
 
 var app = builder.Build();
 
