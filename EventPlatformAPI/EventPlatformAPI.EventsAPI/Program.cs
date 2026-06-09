@@ -22,8 +22,10 @@ builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
 builder.Services.AddSingleton<ReferencesValidationRequestClient>();
 builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
 builder.Services.AddSingleton<ISagaTriggerService, SagaTriggerService>();
+builder.Services.AddScoped<IEventSnapshotPublisher, EventSnapshotPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
 builder.Services.AddHostedService<SagaCommandConsumerHostedService>();
+builder.Services.AddHostedService<RegistrationChoreographyConsumerHostedService>();
 
 var app = builder.Build();
 

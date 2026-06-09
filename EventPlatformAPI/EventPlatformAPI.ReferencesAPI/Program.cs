@@ -19,7 +19,8 @@ builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
 builder.Services.AddHostedService<ReferencesValidationConsumerHostedService>();
 builder.Services.AddHostedService<SagaValidationConsumerHostedService>();
-
+builder.Services.AddHostedService<RegistrationRequestedConsumerHostedService>();
+builder.Services.AddHostedService<EventSnapshotConsumerHostedService>();
 
 var app = builder.Build();
 

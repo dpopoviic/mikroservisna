@@ -4,6 +4,7 @@ using EventPlatformAPI.ReferencesAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventPlatformAPI.ReferencesAPI.Migrations
 {
     [DbContext(typeof(ReferenceDbContext))]
-    partial class ReferenceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608233216_created_event_snapshot")]
+    partial class created_event_snapshot
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
