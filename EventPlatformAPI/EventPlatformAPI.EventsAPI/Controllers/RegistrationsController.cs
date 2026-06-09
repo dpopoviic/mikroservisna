@@ -21,9 +21,6 @@ public class RegistrationsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Creates a new event registration and kicks off the Saga Choreography.
-    /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateRegistration(
         [FromBody] CreateRegistrationRequestDto request,
@@ -35,7 +32,6 @@ public class RegistrationsController : ControllerBase
 
         try
         {
-            // 1. Create Registration entity
             var registration = new Registration
             {
                 Id = Guid.NewGuid(),
@@ -48,7 +44,6 @@ public class RegistrationsController : ControllerBase
 
             _db.Registrations.Add(registration);
 
-            // 2. Create initial saga state
             var sagaState = new RegistrationSagaState
             {
                 Id = Guid.NewGuid(),
@@ -60,7 +55,6 @@ public class RegistrationsController : ControllerBase
 
             _db.RegistrationSagaStates.Add(sagaState);
 
-            // 3. Enqueue RegistrationRequestedEvent via Outbox
             var @event = new RegistrationRequestedEvent
             {
                 CorrelationId = correlationId,
@@ -81,7 +75,6 @@ public class RegistrationsController : ControllerBase
                 IsPublished = false
             });
 
-            // 4. Log saga event
             _db.SagaEventLogs.Add(new SagaEventLog
             {
                 Id = Guid.NewGuid(),

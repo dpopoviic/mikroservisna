@@ -10,6 +10,7 @@ builder.ConfigureServices((context, services) =>
 
     services.AddHostedService<EmailQueueConsumerHostedService>();
     services.AddHostedService<SagaNotificationConsumerHostedService>();
+    services.AddHostedService<SeatReservedConsumerHostedService>();
 
 });
 

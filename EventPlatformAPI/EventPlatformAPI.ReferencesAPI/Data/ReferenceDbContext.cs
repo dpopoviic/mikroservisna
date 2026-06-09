@@ -12,6 +12,7 @@ public class ReferenceDbContext : DbContext
     public DbSet<Lecturer> Lecturers => Set<Lecturer>();
     public DbSet<Location> Locations => Set<Location>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<EventSnapshot> EventSnapshots => Set<EventSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,6 +50,16 @@ public class ReferenceDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Payload).IsRequired();
             entity.HasIndex(x => new { x.IsPublished, x.CreatedAt });
+        });
+        modelBuilder.Entity<EventSnapshot>(entity =>
+        {
+            entity.ToTable("EventSnapshots");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ExternalEventId).IsRequired();
+            entity.Property(x => x.IsPublished).IsRequired();
+            entity.Property(x => x.EventDate).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+            entity.HasIndex(x => x.ExternalEventId).IsUnique();
         });
     }
 }
