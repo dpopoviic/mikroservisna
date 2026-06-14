@@ -7,9 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Commands\" />
-    <Folder Include="Repositories\" />
-    <Folder Include="Queries\" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EventPlatformAPI.UsersAPI.Domains\EventPlatformAPI.UsersAPI.Domains.csproj" />
   </ItemGroup>
 
 </Project>

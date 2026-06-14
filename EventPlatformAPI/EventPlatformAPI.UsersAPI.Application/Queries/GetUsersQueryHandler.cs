@@ -1,0 +1,15 @@
+﻿using EventPlatformAPI.UsersAPI.Application.Interfaces;
+using EventPlatformAPI.UsersAPI.Application.ReadModels;
+
+namespace EventPlatformAPI.UsersAPI.Application.Queries
+{
+    public class GetUsersQueryHandler(IUserReadRepository repository) : IQueryHandler<GetUsersQuery, List<UserReadModel>>
+    {
+        public async Task<List<UserReadModel>?> HandleAsync(
+            GetUsersQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            return await repository.LoadAllAsync(cancellationToken);
+        }
+    }
+}

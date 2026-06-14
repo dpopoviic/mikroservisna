@@ -238,22 +238,4 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
             }
         }
     }
-    public class UserAggregateSnapshot
-    {
-        public Guid Id { get; set; }
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public int Version { get; set; }
-        public List<RegistrationSnapshot> Registrations { get; set; } = new();
-    }
-
-    public class RegistrationSnapshot
-    {
-        public Guid EventId { get; set; }
-        public RegistrationStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
-
 }
