@@ -3,9 +3,9 @@ using EventPlatformAPI.UsersAPI.Application.ReadModels;
 
 namespace EventPlatformAPI.UsersAPI.Application.Queries
 {
-    public class GetRegistrationsForEventQueryHandler(IRegistrationReadRepository repository) : IQueryHandler<GetRegistrationsForEventQuery, List<RegistrationReadModel>>
+    public class GetRegistrationsForEventQueryHandler(IRegistrationReadRepository repository) : IQueryHandler<GetRegistrationsForEventQuery, List<RegistrationRequest>?>
     {
-        public Task<List<RegistrationReadModel>?> HandleAsync(GetRegistrationsForEventQuery query, CancellationToken ct)
+        public Task<List<RegistrationRequest>?> HandleAsync(GetRegistrationsForEventQuery query, CancellationToken ct)
         {
             return repository.LoadAllByEventAsync(query.EventId, ct);
         }

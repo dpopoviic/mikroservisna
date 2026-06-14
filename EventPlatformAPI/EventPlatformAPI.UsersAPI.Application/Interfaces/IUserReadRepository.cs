@@ -6,9 +6,9 @@ namespace EventPlatformAPI.UsersAPI.Application.Interfaces
     public interface IUserReadRepository
     {
 
-        Task<UserReadModel?> LoadAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<List<EventHistoryReadModel>?> LoadAllHistoryAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<List<UserReadModel>?> LoadAllAsync(CancellationToken cancellationToken = default);
+        Task<UserRequest?> LoadAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<List<EventHistoryRequest>?> LoadAllHistoryAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<List<UserRequest>?> LoadAllAsync(CancellationToken cancellationToken = default);
         Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
     }

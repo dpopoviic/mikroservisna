@@ -1,6 +1,6 @@
 ﻿namespace EventPlatformAPI.UsersAPI.Application.ReadModels
 {
-    public record UserReadModel(
+    public record UserRequest(
     Guid Id,
     string FirstName,
     string LastName,

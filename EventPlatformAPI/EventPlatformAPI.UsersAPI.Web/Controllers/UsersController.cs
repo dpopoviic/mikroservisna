@@ -14,7 +14,7 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
         {
             var query = new GetUsersQuery();
 
-            var result = await queryHandler.Dispatch<GetUsersQuery, List<UserReadModel>>(query, cancellationToken);
+            var result = await queryHandler.Dispatch<GetUsersQuery, List<UserRequest>>(query, cancellationToken);
 
             return Ok(result);
         }
@@ -22,7 +22,7 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
         {
             var query = new GetUserByIdQuery(id);
-            var result = await queryHandler.Dispatch<GetUserByIdQuery, UserReadModel?>(query, cancellationToken);
+            var result = await queryHandler.Dispatch<GetUserByIdQuery, UserRequest?>(query, cancellationToken);
 
             return result is null ? NotFound() : Ok(result);
         }
@@ -32,7 +32,7 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
         {
             var query = new GetUserHistoryQuery(id);
 
-            var result = await queryHandler.Dispatch<GetUserHistoryQuery, List<EventHistoryReadModel>>(query, cancellationToken);
+            var result = await queryHandler.Dispatch<GetUserHistoryQuery, List<EventHistoryRequest>>(query, cancellationToken);
             return Ok(result);
         }
 
@@ -41,7 +41,7 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
         {
             var query = new GetUserRegistrationsQuery(id);
 
-            var result = await queryHandler.Dispatch<GetUserRegistrationsQuery, List<RegistrationReadModel>>(query, cancellationToken);   
+            var result = await queryHandler.Dispatch<GetUserRegistrationsQuery, List<RegistrationRequest>>(query, cancellationToken);   
 
             return Ok(result);
         }

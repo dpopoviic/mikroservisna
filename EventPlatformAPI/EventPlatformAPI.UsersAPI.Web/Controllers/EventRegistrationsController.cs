@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EventPlatformAPI.UsersAPI.Web.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class EventRegistrationsController(IQueryDispatcher queryHandler, ICommandDispatcher commandDispatcher) : Controller
     {
 
@@ -15,7 +17,7 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
             Guid eventId,
             CancellationToken cancellationToken)
         {
-            var result = await queryHandler.Dispatch<GetRegistrationsForEventQuery, List<RegistrationReadModel>>(
+            var result = await queryHandler.Dispatch<GetRegistrationsForEventQuery, List<RegistrationRequest>>(
                 new GetRegistrationsForEventQuery(eventId), cancellationToken);
             return Ok(result);
         }

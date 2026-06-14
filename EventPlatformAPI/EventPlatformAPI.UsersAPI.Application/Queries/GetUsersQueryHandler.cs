@@ -3,9 +3,9 @@ using EventPlatformAPI.UsersAPI.Application.ReadModels;
 
 namespace EventPlatformAPI.UsersAPI.Application.Queries
 {
-    public class GetUsersQueryHandler(IUserReadRepository repository) : IQueryHandler<GetUsersQuery, List<UserReadModel>>
+    public class GetUsersQueryHandler(IUserReadRepository repository) : IQueryHandler<GetUsersQuery, List<UserRequest>>
     {
-        public async Task<List<UserReadModel>?> HandleAsync(
+        public async Task<List<UserRequest>?> HandleAsync(
             GetUsersQuery query,
             CancellationToken cancellationToken = default)
         {

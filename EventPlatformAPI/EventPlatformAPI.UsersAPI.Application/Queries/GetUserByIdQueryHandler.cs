@@ -3,10 +3,10 @@ using EventPlatformAPI.UsersAPI.Application.ReadModels;
 
 namespace EventPlatformAPI.UsersAPI.Application.Queries
 {
-    public class GetUserByIdQueryHandler(IUserReadRepository repository) : IQueryHandler<GetUserByIdQuery, UserReadModel>
+    public class GetUserByIdQueryHandler(IUserReadRepository repository) : IQueryHandler<GetUserByIdQuery, UserRequest>
     {
 
-        public async Task<UserReadModel?> HandleAsync(
+        public async Task<UserRequest?> HandleAsync(
             GetUserByIdQuery query,
             CancellationToken cancellationToken = default)
         {

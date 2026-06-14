@@ -38,6 +38,10 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
 
             return aggregate;
         }
+        public static UserAggregate Reconstruct()
+        {
+            return new UserAggregate();
+        }
         public void ChangeEmail(string newEmail, Guid correlationId)
         {
             if (string.IsNullOrWhiteSpace(newEmail))

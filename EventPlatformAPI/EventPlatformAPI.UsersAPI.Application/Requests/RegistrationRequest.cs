@@ -1,6 +1,6 @@
 ﻿namespace EventPlatformAPI.UsersAPI.Application.ReadModels
 {
-    public record RegistrationReadModel(
+    public record RegistrationRequest(
     Guid Id,
     Guid UserId,
     Guid EventId,
