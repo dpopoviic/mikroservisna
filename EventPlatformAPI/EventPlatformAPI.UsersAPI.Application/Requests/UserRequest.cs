@@ -1,4 +1,4 @@
-﻿namespace EventPlatformAPI.UsersAPI.Application.ReadModels
+﻿namespace EventPlatformAPI.UsersAPI.Application.Requests
 {
     public record UserRequest(
     Guid Id,

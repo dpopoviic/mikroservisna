@@ -1,7 +1,6 @@
 ﻿using EventPlatformAPI.UsersAPI.Application.Interfaces;
-using EventPlatformAPI.UsersAPI.Application.ReadModels;
+using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Infrastructure.Data;
-using EventPlatformAPI.UsersAPI.Infrastructure.ReadModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories

@@ -33,16 +33,17 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             [nameof(RegistrationCancelledEvent)] = typeof(RegistrationCancelledEvent),
         };
 
-        public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await db.Users
+                            .AsNoTracking()
+                            .AnyAsync(u => u.Email == email, cancellationToken);
         }
 
         public async Task<UserAggregate?> LoadAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var aggregate = UserAggregate.Reconstruct();
 
-            // Step 1: Try the latest snapshot
             var snapshotRow = await db.Snapshots
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.AggregateId == id, cancellationToken);
@@ -60,18 +61,15 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                 startFromVersion = snapshotRow.Version;
             }
 
-            // Step 2: Load only events after the snapshot version
             var records = await db.EventStore
                 .AsNoTracking()
                 .Where(e => e.AggregateId == id && e.Version > startFromVersion)
                 .OrderBy(e => e.Version)
                 .ToListAsync(cancellationToken);
 
-            // Aggregate does not exist at all
             if (startFromVersion == 0 && records.Count == 0)
                 return null;
 
-            // Step 3: Replay remaining events
             var domainEvents = records.Select(DeserializeEvent).ToList();
             aggregate.LoadFromHistory(domainEvents);
 
@@ -83,7 +81,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             var uncommitted = user.DequeueUncommittedEvents();
             if (uncommitted.Count == 0) return;
 
-            // Optimistic concurrency: version before this batch of new events
             int expectedVersion = user.Version - uncommitted.Count;
 
             var currentMaxVersion = await db.EventStore
@@ -96,7 +93,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                     $"Optimistic concurrency conflict for aggregate {user.Id}. " +
                     $"Expected version {expectedVersion}, current is {currentMaxVersion}.");
 
-            // Append each new event
             int version = expectedVersion;
             foreach (var domainEvent in uncommitted)
             {
@@ -115,8 +111,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                 });
             }
 
-            // Snapshot strategy: count rows already in DB, add new batch size.
-            // If total is a multiple of the threshold, take a snapshot.
             int existingCount = await db.EventStore
                 .CountAsync(e => e.AggregateId == user.Id, cancellationToken);
 
@@ -124,9 +118,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             if (newTotal % SnapshotThreshold == 0)
                 await UpsertSnapshotAsync(user, cancellationToken);
 
-            // Update read-side projections synchronously (in-process).
-            // All changes (events, snapshot, read models) are flushed in one SaveChangesAsync
-            // to keep the write side and read side consistent within a single request.
             foreach (var domainEvent in uncommitted)
                 await projector.ProjectAsync(domainEvent, cancellationToken);
 
@@ -143,7 +134,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
 
             if (existing is not null)
             {
-                // Update in-place — one row per aggregate
                 existing.SnapshotData = json;
                 existing.Version = aggregate.Version;
                 existing.CreatedAt = DateTime.UtcNow;

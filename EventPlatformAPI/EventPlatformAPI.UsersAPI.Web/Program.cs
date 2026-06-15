@@ -2,7 +2,7 @@ using EventPlatformAPI.UsersAPI.Application.Commands;
 using EventPlatformAPI.UsersAPI.Application.Interfaces;
 using EventPlatformAPI.UsersAPI.Application.Providers;
 using EventPlatformAPI.UsersAPI.Application.Queries;
-using EventPlatformAPI.UsersAPI.Application.ReadModels;
+using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Infrastructure.Data;
 using EventPlatformAPI.UsersAPI.Infrastructure.Projectors;
 using EventPlatformAPI.UsersAPI.Infrastructure.Repositories;
@@ -11,6 +11,14 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
+
+
 builder.Services.AddDbContext<UsersDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("UsersConnection")));
 
@@ -40,10 +48,6 @@ builder.Services.AddScoped<ICommandHandler<CreateRegistrationCommand>, CreateReg
 builder.Services.AddScoped<ICommandHandler<ConfirmRegistrationCommand>, ConfirmRegistrationCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelRegistrationCommand>, CancelRegistrationCommandHandler>();
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer();
 
 
 var app = builder.Build();

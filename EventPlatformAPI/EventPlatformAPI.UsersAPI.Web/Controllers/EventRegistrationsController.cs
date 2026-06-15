@@ -1,7 +1,7 @@
 ﻿using EventPlatformAPI.UsersAPI.Application.Commands;
 using EventPlatformAPI.UsersAPI.Application.Interfaces;
 using EventPlatformAPI.UsersAPI.Application.Queries;
-using EventPlatformAPI.UsersAPI.Application.ReadModels;
+using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 

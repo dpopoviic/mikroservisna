@@ -1,5 +1,5 @@
 ﻿using EventPlatformAPI.UsersAPI.Application.Interfaces;
-using EventPlatformAPI.UsersAPI.Application.ReadModels;
+using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

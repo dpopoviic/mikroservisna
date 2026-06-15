@@ -6,14 +6,8 @@ using static EventPlatformAPI.UsersAPI.Domains.Events.UserDomainEvent;
 
 namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 {
-    public class UserProjector
+    public class UserProjector (UsersDbContext db)
     {
-        private readonly UsersDbContext _db;
-
-        public UserProjector(UsersDbContext db)
-        {
-            _db = db;
-        }
 
         public async Task ProjectAsync(DomainEvent @event, CancellationToken cancellationToken = default)
         {
@@ -45,10 +39,10 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
         private async Task HandleAsync(UserCreatedEvent @event, CancellationToken cancellationToken)
         {
-            var exists = await _db.Users.AnyAsync(u => u.Id == @event.AggregateId, cancellationToken);
+            var exists = await db.Users.AnyAsync(u => u.Id == @event.AggregateId, cancellationToken);
             if (exists) return;
 
-            _db.Users.Add(new UserReadModel
+            db.Users.Add(new UserReadModel
             {
                 Id = @event.AggregateId,
                 FirstName = @event.FirstName,
@@ -61,12 +55,12 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
         private async Task HandleAsync(UserEmailChangedEvent @event, CancellationToken cancellationToken)
         {
-            var user = await _db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
             if (user is null) return;
 
             user.Email = @event.NewEmail;
 
-            var registrations = await _db.Registrations
+            var registrations = await db.Registrations
                 .Where(r => r.UserId == @event.AggregateId)
                 .ToListAsync(cancellationToken);
 
@@ -76,27 +70,27 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
         private async Task HandleAsync(UserActivatedEvent @event, CancellationToken cancellationToken)
         {
-            var user = await _db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
             if (user is null) return;
             user.IsActive = true;
         }
 
         private async Task HandleAsync(UserDeactivatedEvent @event, CancellationToken cancellationToken)
         {
-            var user = await _db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
             if (user is null) return;
             user.IsActive = false;
         }
 
         private async Task HandleAsync(RegistrationCreatedEvent @event, CancellationToken cancellationToken)
         {
-            var exists = await _db.Registrations
+            var exists = await db.Registrations
                 .AnyAsync(r => r.UserId == @event.AggregateId && r.EventId == @event.EventId, cancellationToken);
             if (exists) return;
 
-            var user = await _db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
 
-            _db.Registrations.Add(new RegistrationReadModel
+            db.Registrations.Add(new RegistrationReadModel
             {
                 Id = Guid.NewGuid(),
                 UserId = @event.AggregateId,
@@ -114,7 +108,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
         private async Task HandleAsync(RegistrationConfirmedEvent @event, CancellationToken cancellationToken)
         {
-            var registration = await _db.Registrations
+            var registration = await db.Registrations
                 .FirstOrDefaultAsync(
                     r => r.UserId == @event.AggregateId && r.EventId == @event.EventId,
                     cancellationToken);
@@ -128,7 +122,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
         private async Task HandleAsync(RegistrationCancelledEvent @event, CancellationToken cancellationToken)
         {
-            var registration = await _db.Registrations
+            var registration = await db.Registrations
                 .FirstOrDefaultAsync(
                     r => r.UserId == @event.AggregateId && r.EventId == @event.EventId,
                     cancellationToken);
@@ -139,7 +133,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
 
             registration.Status = "Cancelled";
 
-            var user = await _db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
             if (user is not null && user.RegistrationsCount > 0)
                 user.RegistrationsCount--;
         }

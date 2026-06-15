@@ -1,4 +1,4 @@
-﻿using EventPlatformAPI.UsersAPI.Application.ReadModels;
+﻿using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Domains.Aggregates;
 
 namespace EventPlatformAPI.UsersAPI.Application.Interfaces
