@@ -1,4 +1,4 @@
-using EventPlatformAPI.UsersAPI.Application.Commands;
+﻿using EventPlatformAPI.UsersAPI.Application.Commands;
 using EventPlatformAPI.UsersAPI.Application.Interfaces;
 using EventPlatformAPI.UsersAPI.Application.Providers;
 using EventPlatformAPI.UsersAPI.Application.Queries;
@@ -6,7 +6,9 @@ using EventPlatformAPI.UsersAPI.Application.Requests;
 using EventPlatformAPI.UsersAPI.Infrastructure.Data;
 using EventPlatformAPI.UsersAPI.Infrastructure.Projectors;
 using EventPlatformAPI.UsersAPI.Infrastructure.Repositories;
+using EventPlatformAPI.UsersAPI.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
+using EventPlatformAPI.UsersAPI.Web.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,8 @@ builder.Services.AddDbContext<UsersDbContext>(options =>
 builder.Services.AddScoped<IUserWriteRepository, UserWriteRepository>();
 builder.Services.AddScoped<IUserReadRepository, UserReadRepository>();
 builder.Services.AddScoped<IRegistrationReadRepository, RegistrationReadRepository>();
+
+builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 
 builder.Services.AddScoped<UserProjector>();
 
@@ -48,7 +52,10 @@ builder.Services.AddScoped<ICommandHandler<CreateRegistrationCommand>, CreateReg
 builder.Services.AddScoped<ICommandHandler<ConfirmRegistrationCommand>, ConfirmRegistrationCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CancelRegistrationCommand>, CancelRegistrationCommandHandler>();
 
-
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
+builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
+builder.Services.AddHostedService<OutboxDispatcherHostedService>();
+builder.Services.AddHostedService<UsersSagaCommandConsumerHostedService>();
 
 var app = builder.Build();
 

@@ -6,6 +6,6 @@ namespace EventPlatformAPI.UsersAPI.Application.Interfaces
     {
         Task<RegistrationRequest?> LoadAsync(Guid id, CancellationToken cancellationToken = default);
         Task<List<RegistrationRequest>?> LoadAllByUserAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task<List<RegistrationRequest>?> LoadAllByEventAsync(Guid eventId, CancellationToken cancellationToken = default);
+        Task<List<RegistrationRequest>?> LoadAllByEventAsync(int eventId, CancellationToken cancellationToken = default);
     }
 }

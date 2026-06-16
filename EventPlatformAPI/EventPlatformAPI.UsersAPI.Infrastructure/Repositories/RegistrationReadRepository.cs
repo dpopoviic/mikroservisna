@@ -7,7 +7,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
 {
     public class RegistrationReadRepository(UsersDbContext db) : IRegistrationReadRepository
     {
-        public async Task<List<RegistrationRequest>?> LoadAllByEventAsync(Guid eventId, CancellationToken cancellationToken = default)
+        public async Task<List<RegistrationRequest>?> LoadAllByEventAsync(int eventId, CancellationToken cancellationToken = default)
         {
             return await db.Registrations
                            .AsNoTracking()
