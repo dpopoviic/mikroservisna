@@ -2,7 +2,7 @@
 {
     public record ConfirmRegistrationCommand(
         Guid UserId,
-        Guid EventId,
+        int EventId,
         Guid CorrelationId);
 
 }

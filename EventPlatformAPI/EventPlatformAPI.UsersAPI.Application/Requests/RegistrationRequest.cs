@@ -3,7 +3,7 @@
     public record RegistrationRequest(
     Guid Id,
     Guid UserId,
-    Guid EventId,
+    int EventId,
     string Status,
     DateTime CreatedAt,
     string UserFirstName,

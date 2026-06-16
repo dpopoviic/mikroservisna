@@ -6,6 +6,6 @@ namespace EventPlatformAPI.UsersAPI.Web.ViewModels
     public class CreateRegistrationViewModel
     {
         [Required]
-        public Guid EventId { get; set; }
+        public int EventId { get; set; }
     }
 }
