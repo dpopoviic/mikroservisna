@@ -35,32 +35,6 @@ namespace EventPlatformAPI.UsersAPI.Application.Commands
             {
                 aggregate.ConfirmRegistration(command.EventId, command.CorrelationId);
                 await _repository.SaveAsync(aggregate, cancellationToken);
-
-                var confirmedEvent = new RegistrationConfirmedEvent
-                {
-                    CorrelationId = command.CorrelationId,
-                    RegistrationId = Guid.NewGuid(),
-                    UserId = command.UserId,
-                    EventId = command.EventId,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                var outboxMessage = new OutboxMessage
-                {
-                    Id = Guid.NewGuid(),
-                    CorrelationId = command.CorrelationId,
-                    Type = nameof(RegistrationConfirmedEvent),
-                    Destination = SagaQueues.RegistrationConfirmed,
-                    Payload = JsonSerializer.Serialize(confirmedEvent),
-                    CreatedAt = DateTime.UtcNow,
-                    IsPublished = false
-                };
-
-                await _outboxRepository.AddAsync(outboxMessage, cancellationToken);
-
-                _logger.LogInformation(
-                    "[CorrelationId={CorrelationId}] RegistrationConfirmed published to outbox for UserId={UserId}, EventId={EventId}",
-                    command.CorrelationId, command.UserId, command.EventId);
             }
             catch (InvalidOperationException ex)
             {

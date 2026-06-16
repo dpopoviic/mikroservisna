@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -20,9 +20,10 @@
     <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EventPlatformAPI.UsersAPI.Application\EventPlatformAPI.UsersAPI.Application.csproj" />
-  </ItemGroup>
+ <ItemGroup>
+   <ProjectReference Include="..\EventPlatformAPI.UsersAPI.Application\EventPlatformAPI.UsersAPI.Application.csproj" />
+  <ProjectReference Include="..\EventPlatformAPI.Messages\EventPlatformAPI.Messages.csproj" />
+ </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Migrations\" />
