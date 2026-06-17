@@ -18,5 +18,13 @@
         public const string ConfirmRegistration = "saga.cmd.confirm.registration";
         public const string CancelRegistration = "saga.cmd.cancel.registration";
         public const string SendRegistrationEmail = "saga.cmd.send.registration.email";
+
+        // ── Choreography events (no commands, no orchestrator) ────
+        public const string ChoreographyRegistrationCancelled = "choreography.registration.cancelled";
+        public const string ChoreographyEventSeatReleased = "choreography.event.seat.released";
+        public const string ChoreographyEventSeatReleaseFailed = "choreography.event.seat.release.failed";
+        public const string ChoreographyCancellationEmailSent = "choreography.cancellation.email.sent";
+        public const string ChoreographyRegistrationCancellationCompensated = "choreography.registration.cancellation.compensated";
+        public const string ChoreographyCancellationCompensationEmailSent = "choreography.cancellation.compensation.email.sent";
     }
 }
