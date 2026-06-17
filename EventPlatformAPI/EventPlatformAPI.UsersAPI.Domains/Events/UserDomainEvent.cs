@@ -21,18 +21,18 @@
 
         public class RegistrationCreatedEvent : DomainEvent
         {
-            public Guid EventId { get; set; }
+            public int EventId { get; set; }
             public DateTime CreatedAt { get; set; }
         }
 
         public class RegistrationConfirmedEvent : DomainEvent
         {
-            public Guid EventId { get; set; }
+            public int EventId { get; set; }
         }
 
         public class RegistrationCancelledEvent : DomainEvent
         {
-            public Guid EventId { get; set; }
+            public int EventId { get; set; }
         }
     }
 }

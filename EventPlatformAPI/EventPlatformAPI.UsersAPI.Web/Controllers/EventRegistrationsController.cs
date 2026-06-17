@@ -12,9 +12,9 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
     public class EventRegistrationsController(IQueryDispatcher queryHandler, ICommandDispatcher commandDispatcher) : Controller
     {
 
-        [HttpGet("{eventId:guid}/registrations")]
+        [HttpGet("{eventId:int}/registrations")]
         public async Task<IActionResult> GetRegistrationsForEvent(
-            Guid eventId,
+            int eventId,
             CancellationToken cancellationToken)
         {
             var result = await queryHandler.Dispatch<GetRegistrationsForEventQuery, List<RegistrationRequest>>(
@@ -43,10 +43,10 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
             return NoContent();
         }
 
-        [HttpPut("{id:guid}/registrations/{eventId:guid}/confirm")]
+        [HttpPut("{id:guid}/registrations/{eventId:int}/confirm")]
         public async Task<IActionResult> ConfirmRegistration(
             Guid id,
-            Guid eventId,
+            int eventId,
             CancellationToken cancellationToken)
         {
             try 
@@ -63,10 +63,10 @@ namespace EventPlatformAPI.UsersAPI.Web.Controllers
             return NoContent();
         }
 
-        [HttpPut("{id:guid}/registrations/{eventId:guid}/cancel")]
+        [HttpPut("{id:guid}/registrations/{eventId:int}/cancel")]
         public async Task<IActionResult> CancelRegistration(
             Guid id,
-            Guid eventId,
+            int eventId,
             CancellationToken cancellationToken)
         {
             try { 

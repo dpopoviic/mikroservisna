@@ -8,13 +8,13 @@
     }
     public class Registration
     {
-        public Guid EventId { get; private set; }
+        public int EventId { get; private set; }
         public RegistrationStatus Status { get; private set; }
         public DateTime CreatedAt { get; private set; }
 
         private Registration() { }
 
-        internal static Registration Create(Guid eventId, DateTime createdAt)
+        internal static Registration Create(int eventId, DateTime createdAt)
         {
             return new Registration
             {

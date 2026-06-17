@@ -1,4 +1,5 @@
 ﻿using EventPlatformAPI.UsersAPI.Domains.Entities;
+using EventPlatformAPI.UsersAPI.Domains.Outbox;
 using EventPlatformAPI.UsersAPI.Infrastructure.ReadModels;
 using EventPlatformAPI.UsersAPI.Infrastructure.Snapshots;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Data
 
         public DbSet<UserReadModel> Users { get; set; }
         public DbSet<RegistrationReadModel> Registrations { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +75,16 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Data
                 e.HasIndex(x => x.EventId);
                 e.HasIndex(x => new { x.UserId, x.EventId });
             });
+
+            modelBuilder.Entity<OutboxMessage>(entity =>
+           {
+               entity.ToTable("OutboxMessages");
+               entity.HasKey(o => o.Id);
+               entity.Property(o => o.Type).IsRequired().HasMaxLength(256);
+               entity.Property(o => o.Destination).IsRequired().HasMaxLength(256);
+               entity.Property(o => o.Payload).IsRequired();
+               entity.HasIndex(o => new { o.IsPublished, o.CreatedAt });
+           });
         }
 
     }

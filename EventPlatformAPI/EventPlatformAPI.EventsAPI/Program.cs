@@ -18,8 +18,9 @@ builder.Services.AddDbContext<EventsDbContext>(options =>
 // RabbitMQ options
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 
-builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
-builder.Services.AddSingleton<ReferencesValidationRequestClient>();
+    builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
+   builder.Services.AddHostedService<EventsSagaCommandConsumerHostedService>();
+    builder.Services.AddSingleton<ReferencesValidationRequestClient>();
 builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
 

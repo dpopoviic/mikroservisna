@@ -8,6 +8,9 @@ using EventPlatformAPI.UsersAPI.Infrastructure.Snapshots;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using static EventPlatformAPI.UsersAPI.Domains.Events.UserDomainEvent;
+using EventPlatformAPI.Messages.Saga;
+using SagaMessages = EventPlatformAPI.Messages.Saga.UserApiMessages;
+using EventPlatformAPI.UsersAPI.Domains.Outbox;
 
 namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
 {
@@ -15,12 +18,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
     {
         private const int SnapshotThreshold = 5;
         private const string AggregateTypeName = "UserAggregate";
-
-
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
         private static readonly Dictionary<string, Type> EventTypeMap = new()
         {
@@ -53,7 +50,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             if (snapshotRow is not null)
             {
                 var snapshotData = JsonSerializer.Deserialize<UserAggregateSnapshot>(
-                    snapshotRow.SnapshotData, JsonOptions)
+                    snapshotRow.SnapshotData)
                     ?? throw new InvalidOperationException(
                         $"Failed to deserialize snapshot for aggregate {id}.");
 
@@ -104,7 +101,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                     AggregateType = AggregateTypeName,
                     EventType = domainEvent.GetType().Name,
                     EventData = JsonSerializer.Serialize(
-                        domainEvent, domainEvent.GetType(), JsonOptions),
+                        domainEvent, domainEvent.GetType()),
                     Version = version,
                     CorrelationId = domainEvent.CorrelationId,
                     OccurredOn = domainEvent.OccurredOn
@@ -118,8 +115,11 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             if (newTotal % SnapshotThreshold == 0)
                 await UpsertSnapshotAsync(user, cancellationToken);
 
-            foreach (var domainEvent in uncommitted)
-                await projector.ProjectAsync(domainEvent, cancellationToken);
+           foreach (var domainEvent in uncommitted)
+          {
+               await projector.ProjectAsync(domainEvent, cancellationToken);
+              GenerateSagaOutboxMessages(user, domainEvent);
+          }
 
             await db.SaveChangesAsync(cancellationToken);
         }
@@ -127,7 +127,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             UserAggregate aggregate,
             CancellationToken cancellationToken)
         {
-            var json = JsonSerializer.Serialize(aggregate.CreateSnapshot(), JsonOptions);
+            var json = JsonSerializer.Serialize(aggregate.CreateSnapshot());
 
             var existing = await db.Snapshots
                 .FirstOrDefaultAsync(s => s.AggregateId == aggregate.Id, cancellationToken);
@@ -150,14 +150,82 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                 });
             }
         }
-        private static DomainEvent DeserializeEvent(EventStoreRecord record)
+        private void GenerateSagaOutboxMessages(UserAggregate user, DomainEvent domainEvent)
+        {
+            switch (domainEvent)
+            {
+                case RegistrationCreatedEvent e:
+                    db.OutboxMessages.Add(new OutboxMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        CorrelationId = e.CorrelationId,
+                        Type = nameof(SagaMessages.RegistrationRequestedEvent),
+                        Destination = SagaQueues.RegistrationRequested,
+                        Payload = JsonSerializer.Serialize(new SagaMessages.RegistrationRequestedEvent
+                        {
+                            CorrelationId = e.CorrelationId,
+                            RegistrationId = Guid.NewGuid(),
+                            UserId = user.Id,
+                            EventId = e.EventId,
+                            UserEmail = user.Email,
+                            UserFirstName = user.FirstName,
+                            UserLastName = user.LastName,
+                            Timestamp = e.OccurredOn
+                        }),
+                        CreatedAt = DateTime.UtcNow,
+                        IsPublished = false
+                    });
+                    break;
+
+                case RegistrationConfirmedEvent e:
+                    db.OutboxMessages.Add(new OutboxMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        CorrelationId = e.CorrelationId,
+                        Type = nameof(SagaMessages.RegistrationConfirmedEvent),
+                        Destination = SagaQueues.RegistrationConfirmed,
+                        Payload = JsonSerializer.Serialize(new SagaMessages.RegistrationConfirmedEvent
+                        {
+                            CorrelationId = e.CorrelationId,
+                            RegistrationId = Guid.NewGuid(),
+                            UserId = user.Id,
+                            EventId = e.EventId,
+                            Timestamp = e.OccurredOn
+                        }),
+                        CreatedAt = DateTime.UtcNow,
+                        IsPublished = false
+                    });
+                    break;
+
+                case RegistrationCancelledEvent e:
+                    db.OutboxMessages.Add(new OutboxMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        CorrelationId = e.CorrelationId,
+                        Type = nameof(SagaMessages.RegistrationCancelledEvent),
+                        Destination = SagaQueues.RegistrationCancelled,
+                        Payload = JsonSerializer.Serialize(new SagaMessages.RegistrationCancelledEvent
+                        {
+                            CorrelationId = e.CorrelationId,
+                            UserId = user.Id,
+                            EventId = e.EventId,
+                            Timestamp = e.OccurredOn
+                        }),
+                        CreatedAt = DateTime.UtcNow,
+                        IsPublished = false
+                    });
+                    break;
+            }
+        }
+
+       private static DomainEvent DeserializeEvent(EventStoreRecord record)
         {
             if (!EventTypeMap.TryGetValue(record.EventType, out var eventType))
                 throw new InvalidOperationException(
                     $"Unknown event type '{record.EventType}' in EventStore.");
 
             return (DomainEvent?)JsonSerializer.Deserialize(
-                record.EventData, eventType, JsonOptions)
+                record.EventData, eventType)
                 ?? throw new InvalidOperationException(
                     $"Deserialization returned null for event type '{record.EventType}'.");
         }

@@ -35,6 +35,11 @@ namespace EventPlatformAPI.EventsAPI.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
+                    b.Property<int>("AvailableSeats")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("DateTime")
                         .HasColumnType("datetime2");
 
@@ -193,6 +198,9 @@ namespace EventPlatformAPI.EventsAPI.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");

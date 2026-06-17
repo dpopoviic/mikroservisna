@@ -30,12 +30,31 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CorrelationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Destination = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Payload = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Error = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsPublished = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Registrations",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EventId = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserFirstName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -90,6 +109,11 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_IsPublished_CreatedAt",
+                table: "OutboxMessages",
+                columns: new[] { "IsPublished", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Registrations_EventId",
                 table: "Registrations",
                 column: "EventId");
@@ -116,6 +140,9 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "EventStore");
+
+            migrationBuilder.DropTable(
+                name: "OutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "Registrations");

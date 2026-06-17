@@ -2,6 +2,6 @@
 {
     public record CancelRegistrationCommand(
       Guid UserId,
-      Guid EventId,
+      int EventId,
       Guid CorrelationId);
 }

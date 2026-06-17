@@ -1,0 +1,6 @@
+To: pera@example.com
+FullName: Pera Peric
+Subject: Registration Confirmation for Event #2
+Body: Dear Pera Peric, your registration for event #2 has been confirmed.
+Timestamp: 2026-06-17T21:35:24.5333637Z
+CorrelationId: b85e7e3d-2953-4f4f-a952-d5dc54fa4733

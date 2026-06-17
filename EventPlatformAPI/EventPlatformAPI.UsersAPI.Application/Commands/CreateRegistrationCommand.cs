@@ -3,6 +3,6 @@
 
     public record CreateRegistrationCommand(
         Guid UserId,
-        Guid EventId,
+        int EventId,
         Guid CorrelationId);
 }

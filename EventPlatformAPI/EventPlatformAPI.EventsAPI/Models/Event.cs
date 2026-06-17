@@ -8,6 +8,7 @@ public class Event
     public DateTime DateTime { get; set; }
     public decimal DurationInHours { get; set; }
     public decimal Price { get; set; }
+    public int AvailableSeats { get; set; }
 
     public int TypeId { get; set; }
     public int LocationId { get; set; }

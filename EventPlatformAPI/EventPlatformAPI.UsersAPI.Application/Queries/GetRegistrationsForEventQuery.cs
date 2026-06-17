@@ -1,5 +1,5 @@
 ﻿namespace EventPlatformAPI.UsersAPI.Application.Queries
 {
-    public record GetRegistrationsForEventQuery(Guid EventId);
+    public record GetRegistrationsForEventQuery(int EventId);
 
 }

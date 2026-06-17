@@ -1,0 +1,4 @@
+To: org@example.com
+Subject: Kreiran novi događaj: Dogadjaj 5
+Body: Događaj Dogadjaj 5 dana 17.06.2026 20:51 na lokaciji Unknown Location
+Timestamp: 2026-06-17T20:51:45.3084086Z

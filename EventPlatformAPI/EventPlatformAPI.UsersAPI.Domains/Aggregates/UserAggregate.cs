@@ -86,7 +86,7 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
             });
         }
 
-        public void CreateRegistration(Guid eventId, Guid correlationId)
+        public void CreateRegistration(int eventId, Guid correlationId)
         {
             if (!IsActive)
                 throw new InvalidOperationException("Inactive users cannot create registrations.");
@@ -105,7 +105,7 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
             });
         }
 
-        public void ConfirmRegistration(Guid eventId, Guid correlationId)
+        public void ConfirmRegistration(int eventId, Guid correlationId)
         {
             var registration = Registrations.FirstOrDefault(r => r.EventId == eventId)
                 ?? throw new InvalidOperationException($"Registration for event {eventId} does not exist.");
@@ -125,7 +125,7 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
             });
         }
 
-        public void CancelRegistration(Guid eventId, Guid correlationId)
+        public void CancelRegistration(int eventId, Guid correlationId)
         {
             var registration = Registrations.FirstOrDefault(r => r.EventId == eventId)
                 ?? throw new InvalidOperationException($"Registration for event {eventId} does not exist.");

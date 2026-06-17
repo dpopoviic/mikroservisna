@@ -39,7 +39,7 @@ public class EventsDbContext : DbContext
             entity.Property(x => x.Agenda).HasMaxLength(4000);
             entity.Property(x => x.DurationInHours).HasPrecision(5, 2);
             entity.Property(x => x.Price).HasColumnType("decimal(18,2)");
-
+            entity.Property(x => x.AvailableSeats).IsRequired().HasDefaultValue(0);
             entity.HasOne(x => x.Type)
                 .WithMany(x => x.Events)
                 .HasForeignKey(x => x.TypeId)
@@ -98,6 +98,7 @@ public class EventsDbContext : DbContext
             entity.ToTable("OutboxMessages");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Payload).IsRequired();
+           entity.Property(x => x.CorrelationId).IsRequired();
             entity.HasIndex(x => new { x.IsPublished, x.CreatedAtUtc });
         });
     }
