@@ -1,4 +1,4 @@
-using EventPlatformAPI.EventsAPI.Models;
+﻿using EventPlatformAPI.EventsAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventPlatformAPI.EventsAPI.Data;
@@ -19,6 +19,7 @@ public class EventsDbContext : DbContext
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<ChoreographyProcessState> ChoreographyProcessStates => Set<ChoreographyProcessState>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -92,7 +93,6 @@ public class EventsDbContext : DbContext
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
             entity.HasIndex(x => x.ExternalId).IsUnique();
         });
-
         modelBuilder.Entity<OutboxMessage>(entity =>
         {
             entity.ToTable("OutboxMessages");
@@ -101,5 +101,17 @@ public class EventsDbContext : DbContext
            entity.Property(x => x.CorrelationId).IsRequired();
             entity.HasIndex(x => new { x.IsPublished, x.CreatedAtUtc });
         });
+
+        modelBuilder.Entity<ChoreographyProcessState>(entity =>
+       {
+           entity.ToTable("ChoreographyProcessStates");
+           entity.HasKey(x => x.Id);
+           entity.Property(x => x.CorrelationId).IsRequired();
+           entity.Property(x => x.EventName).HasMaxLength(256).IsRequired();
+           entity.Property(x => x.ServiceName).HasMaxLength(128).IsRequired();
+           entity.Property(x => x.Status).HasMaxLength(64).IsRequired();
+           entity.Property(x => x.CreatedAt).IsRequired();
+           entity.HasIndex(x => x.CorrelationId);
+       });
     }
 }

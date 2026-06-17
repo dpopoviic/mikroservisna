@@ -20,6 +20,7 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("Ra
 
     builder.Services.AddHostedService<RabbitMqConsumerHostedService>();
    builder.Services.AddHostedService<EventsSagaCommandConsumerHostedService>();
+   builder.Services.AddHostedService<RegistrationCancelledChoreographyConsumerHostedService>();
     builder.Services.AddSingleton<ReferencesValidationRequestClient>();
 builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
