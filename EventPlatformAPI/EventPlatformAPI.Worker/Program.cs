@@ -10,6 +10,8 @@ builder.ConfigureServices((context, services) =>
 
    services.AddHostedService<EmailQueueConsumerHostedService>();
    services.AddHostedService<SagaEmailCommandConsumerHostedService>();
+   services.AddHostedService<EventSeatReleasedChoreographyConsumerHostedService>();
+   services.AddHostedService<CancellationCompensatedChoreographyConsumerHostedService>();
 });
 
 var host = builder.Build();
