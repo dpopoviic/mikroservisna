@@ -33,5 +33,12 @@
         {
             Status = RegistrationStatus.Cancelled;
         }
+
+        internal void RestoreFromCancellation()
+        {
+            if (Status != RegistrationStatus.Cancelled)
+                throw new InvalidOperationException("Only cancelled registrations can be restored.");
+            Status = RegistrationStatus.Confirmed;
+        }
     }
 }

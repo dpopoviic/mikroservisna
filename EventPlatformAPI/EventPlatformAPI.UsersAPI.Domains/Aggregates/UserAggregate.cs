@@ -110,8 +110,8 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
             var registration = Registrations.FirstOrDefault(r => r.EventId == eventId)
                 ?? throw new InvalidOperationException($"Registration for event {eventId} does not exist.");
 
-            if (registration.Status == RegistrationStatus.Cancelled)
-                throw new InvalidOperationException("Cannot confirm a cancelled registration.");
+            //if (registration.Status == RegistrationStatus.Cancelled)
+            //    throw new InvalidOperationException("Cannot confirm a cancelled registration.");
 
             if (registration.Status == RegistrationStatus.Confirmed)
                 throw new InvalidOperationException("Registration is already confirmed.");
@@ -141,6 +141,26 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
                 EventId = eventId
             });
         }
+
+        public void RestoreCancelledRegistration(int eventId, Guid correlationId)
+        {
+            var registration = Registrations.FirstOrDefault(r => r.EventId == eventId)
+                ?? throw new InvalidOperationException($"Registration for event {eventId} does not exist.");
+
+            if (registration.Status != RegistrationStatus.Cancelled)
+                throw new InvalidOperationException("Cannot restore a registration that is not cancelled.");
+
+            registration.RestoreFromCancellation();
+
+            RaiseEvent(new RegistrationCancellationCompensatedEvent
+            {
+                AggregateId = Id,
+                CorrelationId = correlationId,
+                OccurredOn = DateTime.UtcNow,
+                EventId = eventId
+            });
+        }
+
         private void RaiseEvent(DomainEvent @event)
         {
             Apply(@event);
@@ -235,6 +255,10 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
 
                 case RegistrationCancelledEvent e:
                     Registrations.First(r => r.EventId == e.EventId).Cancel();
+                    break;
+
+                case RegistrationCancellationCompensatedEvent e:
+                    Registrations.First(r => r.EventId == e.EventId).RestoreFromCancellation();
                     break;
 
                 default:

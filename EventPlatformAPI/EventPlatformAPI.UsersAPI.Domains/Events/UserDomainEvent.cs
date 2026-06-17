@@ -34,5 +34,10 @@
         {
             public int EventId { get; set; }
         }
+
+        public class RegistrationCancellationCompensatedEvent : DomainEvent
+        {
+            public int EventId { get; set; }
+        }
     }
 }

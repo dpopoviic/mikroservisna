@@ -17,6 +17,8 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Data
         public DbSet<RegistrationReadModel> Registrations { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
+        public DbSet<ChoreographyProcessState> ChoreographyProcessStates { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -77,14 +79,26 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Data
             });
 
             modelBuilder.Entity<OutboxMessage>(entity =>
-           {
-               entity.ToTable("OutboxMessages");
-               entity.HasKey(o => o.Id);
-               entity.Property(o => o.Type).IsRequired().HasMaxLength(256);
-               entity.Property(o => o.Destination).IsRequired().HasMaxLength(256);
-               entity.Property(o => o.Payload).IsRequired();
-               entity.HasIndex(o => new { o.IsPublished, o.CreatedAt });
-           });
+            {
+                entity.ToTable("OutboxMessages");
+                entity.HasKey(o => o.Id);
+                entity.Property(o => o.Type).IsRequired().HasMaxLength(256);
+                entity.Property(o => o.Destination).IsRequired().HasMaxLength(256);
+                entity.Property(o => o.Payload).IsRequired();
+                entity.HasIndex(o => new { o.IsPublished, o.CreatedAt });
+            });
+
+            modelBuilder.Entity<ChoreographyProcessState>(entity =>
+            {
+                entity.ToTable("ChoreographyProcessStates");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.CorrelationId).IsRequired();
+                entity.Property(x => x.EventName).HasMaxLength(256).IsRequired();
+                entity.Property(x => x.ServiceName).HasMaxLength(128).IsRequired();
+                entity.Property(x => x.Status).HasMaxLength(64).IsRequired();
+                entity.Property(x => x.CreatedAt).IsRequired();
+                entity.HasIndex(x => x.CorrelationId);
+            });
         }
 
     }
