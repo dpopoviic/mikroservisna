@@ -19,12 +19,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
         private const int SnapshotThreshold = 5;
         private const string AggregateTypeName = "UserAggregate";
 
-
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
         private static readonly Dictionary<string, Type> EventTypeMap = new()
         {
             [nameof(UserCreatedEvent)] = typeof(UserCreatedEvent),
@@ -56,7 +50,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             if (snapshotRow is not null)
             {
                 var snapshotData = JsonSerializer.Deserialize<UserAggregateSnapshot>(
-                    snapshotRow.SnapshotData, JsonOptions)
+                    snapshotRow.SnapshotData)
                     ?? throw new InvalidOperationException(
                         $"Failed to deserialize snapshot for aggregate {id}.");
 
@@ -107,7 +101,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                     AggregateType = AggregateTypeName,
                     EventType = domainEvent.GetType().Name,
                     EventData = JsonSerializer.Serialize(
-                        domainEvent, domainEvent.GetType(), JsonOptions),
+                        domainEvent, domainEvent.GetType()),
                     Version = version,
                     CorrelationId = domainEvent.CorrelationId,
                     OccurredOn = domainEvent.OccurredOn
@@ -133,7 +127,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             UserAggregate aggregate,
             CancellationToken cancellationToken)
         {
-            var json = JsonSerializer.Serialize(aggregate.CreateSnapshot(), JsonOptions);
+            var json = JsonSerializer.Serialize(aggregate.CreateSnapshot());
 
             var existing = await db.Snapshots
                 .FirstOrDefaultAsync(s => s.AggregateId == aggregate.Id, cancellationToken);
@@ -177,7 +171,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                             UserFirstName = user.FirstName,
                             UserLastName = user.LastName,
                             Timestamp = e.OccurredOn
-                        }, JsonOptions),
+                        }),
                         CreatedAt = DateTime.UtcNow,
                         IsPublished = false
                     });
@@ -197,7 +191,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                             UserId = user.Id,
                             EventId = e.EventId,
                             Timestamp = e.OccurredOn
-                        }, JsonOptions),
+                        }),
                         CreatedAt = DateTime.UtcNow,
                         IsPublished = false
                     });
@@ -216,7 +210,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                             UserId = user.Id,
                             EventId = e.EventId,
                             Timestamp = e.OccurredOn
-                        }, JsonOptions),
+                        }),
                         CreatedAt = DateTime.UtcNow,
                         IsPublished = false
                     });
@@ -231,7 +225,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                     $"Unknown event type '{record.EventType}' in EventStore.");
 
             return (DomainEvent?)JsonSerializer.Deserialize(
-                record.EventData, eventType, JsonOptions)
+                record.EventData, eventType)
                 ?? throw new InvalidOperationException(
                     $"Deserialization returned null for event type '{record.EventType}'.");
         }

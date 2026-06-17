@@ -39,7 +39,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Messaging
             await _channel.BasicPublishAsync(
                 exchange: string.Empty,
                 routingKey: destination,
-                mandatory: true,
+                mandatory: false,
                 basicProperties: props,
                 body: body,
                 cancellationToken: ct);

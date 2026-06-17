@@ -35,11 +35,5 @@ builder.ConfigureServices((ctx, services) =>
 
 var host = builder.Build();
 
-// Auto-migrate on startup (dev convenience; replace with proper migration tool in production)
-using (var scope = host.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<SagaDbContext>();
-    await db.Database.MigrateAsync();
-}
 
 await host.RunAsync();
