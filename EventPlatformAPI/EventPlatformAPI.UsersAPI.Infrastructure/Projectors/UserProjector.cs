@@ -34,6 +34,9 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
                 case RegistrationCancelledEvent e:
                     await HandleAsync(e, cancellationToken);
                     break;
+                case RegistrationCancellationCompensatedEvent e:
+                    await HandleAsync(e, cancellationToken);
+                    break;
             }
         }
 
@@ -136,6 +139,23 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Projectors
             var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
             if (user is not null && user.RegistrationsCount > 0)
                 user.RegistrationsCount--;
+        }
+
+        private async Task HandleAsync(RegistrationCancellationCompensatedEvent @event, CancellationToken cancellationToken)
+        {
+            var registration = await db.Registrations
+                .FirstOrDefaultAsync(
+                    r => r.UserId == @event.AggregateId && r.EventId == @event.EventId,
+                    cancellationToken);
+
+            if (registration is null) return;
+
+            if (registration.Status == "Confirmed") return;
+
+            registration.Status = "Confirmed";
+
+            var user = await db.Users.FindAsync([@event.AggregateId], cancellationToken);
+            if (user is not null) user.RegistrationsCount++;
         }
     }
 }

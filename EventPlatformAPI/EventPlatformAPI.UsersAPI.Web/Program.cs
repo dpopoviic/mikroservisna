@@ -1,4 +1,4 @@
-﻿using EventPlatformAPI.UsersAPI.Application.Commands;
+using EventPlatformAPI.UsersAPI.Application.Commands;
 using EventPlatformAPI.UsersAPI.Application.Interfaces;
 using EventPlatformAPI.UsersAPI.Application.Providers;
 using EventPlatformAPI.UsersAPI.Application.Queries;
@@ -55,7 +55,8 @@ builder.Services.AddScoped<ICommandHandler<CancelRegistrationCommand>, CancelReg
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 builder.Services.AddSingleton<IOutboxPublisher, OutboxPublisher>();
 builder.Services.AddHostedService<OutboxDispatcherHostedService>();
-builder.Services.AddHostedService<UsersSagaCommandConsumerHostedService>();
+    builder.Services.AddHostedService<UsersSagaCommandConsumerHostedService>();
+   builder.Services.AddHostedService<ChoreographyEventConsumerHostedService>();
 
 var app = builder.Build();
 

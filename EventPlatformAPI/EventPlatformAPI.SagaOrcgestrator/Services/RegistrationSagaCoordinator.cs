@@ -23,7 +23,6 @@ namespace EventPlatformAPI.SagaOrcgestrator.Services
                 "[CorrelationId={CorrelationId}] Saga received RegistrationRequested. UserId={UserId} EventId={EventId}",
                 evt.CorrelationId, evt.UserId, evt.EventId);
 
-            // Idempotency: ignore duplicate deliveries
             var existing = await repository.FindByCorrelationIdAsync(evt.CorrelationId, ct);
             if (existing is not null)
             {

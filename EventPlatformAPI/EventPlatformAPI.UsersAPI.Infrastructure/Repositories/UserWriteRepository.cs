@@ -10,8 +10,8 @@ using System.Text.Json;
 using static EventPlatformAPI.UsersAPI.Domains.Events.UserDomainEvent;
 using EventPlatformAPI.Messages.Saga;
 using SagaMessages = EventPlatformAPI.Messages.Saga.UserApiMessages;
+using ChoreographyEvents = EventPlatformAPI.Messages.Saga.Choreography;
 using EventPlatformAPI.UsersAPI.Domains.Outbox;
-
 namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
 {
     public class UserWriteRepository(UsersDbContext db, UserProjector projector) : IUserWriteRepository
@@ -28,6 +28,7 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
             [nameof(RegistrationCreatedEvent)] = typeof(RegistrationCreatedEvent),
             [nameof(RegistrationConfirmedEvent)] = typeof(RegistrationConfirmedEvent),
             [nameof(RegistrationCancelledEvent)] = typeof(RegistrationCancelledEvent),
+           [nameof(RegistrationCancellationCompensatedEvent)] = typeof(RegistrationCancellationCompensatedEvent),
         };
 
         public async Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
@@ -196,7 +197,6 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                         IsPublished = false
                     });
                     break;
-
                 case RegistrationCancelledEvent e:
                     db.OutboxMessages.Add(new OutboxMessage
                     {
@@ -214,7 +214,44 @@ namespace EventPlatformAPI.UsersAPI.Infrastructure.Repositories
                         CreatedAt = DateTime.UtcNow,
                         IsPublished = false
                     });
+                   db.OutboxMessages.Add(new OutboxMessage
+                   {
+                       Id = Guid.NewGuid(),
+                       CorrelationId = e.CorrelationId,
+                       Type = nameof(ChoreographyEvents.RegistrationCancelledChoreographyEvent),
+                       Destination = SagaQueues.ChoreographyRegistrationCancelled,
+                       Payload = JsonSerializer.Serialize(new ChoreographyEvents.RegistrationCancelledChoreographyEvent
+                       {
+                           CorrelationId = e.CorrelationId,
+                           RegistrationId = Guid.NewGuid(),
+                           UserId = user.Id,
+                           EventId = e.EventId,
+                           Timestamp = e.OccurredOn
+                       }),
+                       CreatedAt = DateTime.UtcNow,
+                       IsPublished = false
+                   });
                     break;
+
+                case RegistrationCancellationCompensatedEvent e:
+                   db.OutboxMessages.Add(new OutboxMessage
+                   {
+                       Id = Guid.NewGuid(),
+                       CorrelationId = e.CorrelationId,
+                       Type = nameof(ChoreographyEvents.RegistrationCancellationCompensatedEvent),
+                       Destination = SagaQueues.ChoreographyRegistrationCancellationCompensated,
+                       Payload = JsonSerializer.Serialize(new ChoreographyEvents.RegistrationCancellationCompensatedEvent
+                       {
+                           CorrelationId = e.CorrelationId,
+                           RegistrationId = Guid.NewGuid(),
+                           UserId = user.Id,
+                           EventId = e.EventId,
+                           Timestamp = e.OccurredOn
+                       }),
+                       CreatedAt = DateTime.UtcNow,
+                       IsPublished = false
+                   });
+                   break;
             }
         }
 
