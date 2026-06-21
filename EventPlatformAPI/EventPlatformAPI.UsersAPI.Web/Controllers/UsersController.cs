@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EventPlatformAPI.UsersAPI.Web.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UsersController(IQueryDispatcher queryHandler, ICommandDispatcher commandDispatcher) : Controller
     {
         [HttpGet]

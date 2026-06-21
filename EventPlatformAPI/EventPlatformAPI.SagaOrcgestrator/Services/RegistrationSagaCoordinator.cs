@@ -179,7 +179,6 @@ namespace EventPlatformAPI.SagaOrcgestrator.Services
 
             await using var tx = await db.Database.BeginTransactionAsync(ct);
 
-            // Transition to Compensating first so the state is visible in logs
             LogTransition(evt.CorrelationId, state.Status, RegistrationSagaStatus.Compensating);
             state.Status = RegistrationSagaStatus.Compensating;
             state.FailureReason = evt.Reason;

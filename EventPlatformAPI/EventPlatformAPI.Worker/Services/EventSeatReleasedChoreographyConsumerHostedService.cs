@@ -95,7 +95,6 @@ public sealed class EventSeatReleasedChoreographyConsumerHostedService : Backgro
                     "[CorrelationId={CorrelationId}] Worker: EventSeatReleased received. EventId={EventId}",
                     evt.CorrelationId, evt.EventId);
 
-                // Write cancellation email to file
                 var emailContent = new
                 {
                     CorrelationId = evt.CorrelationId,
@@ -119,7 +118,6 @@ public sealed class EventSeatReleasedChoreographyConsumerHostedService : Backgro
                     "[CorrelationId={CorrelationId}] Cancellation email file written: {Filename}",
                     evt.CorrelationId, fileName);
 
-                // Publish CancellationEmailSent directly to RabbitMQ
                 var sentEvent = new CancellationEmailSentEvent
                 {
                     CorrelationId = evt.CorrelationId,

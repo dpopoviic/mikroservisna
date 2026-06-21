@@ -111,7 +111,6 @@ public sealed class ChoreographyEventConsumerHostedService : BackgroundService
             "[CorrelationId={CorrelationId}] UsersAPI: EventSeatReleaseFailed received. EventId={EventId}, Reason={Reason}",
             evt.CorrelationId, evt.EventId, evt.Reason);
 
-        // Find the user who has this registration via the read model
         var registration = await db.Registrations
             .FirstOrDefaultAsync(r => r.EventId == evt.EventId, ct);
 
@@ -123,7 +122,6 @@ public sealed class ChoreographyEventConsumerHostedService : BackgroundService
             return;
         }
 
-        // Load the user aggregate and restore the cancelled registration
         var aggregate = await userRepository.LoadAsync(registration.UserId, ct);
         if (aggregate is null)
         {
@@ -136,7 +134,6 @@ public sealed class ChoreographyEventConsumerHostedService : BackgroundService
         aggregate.RestoreCancelledRegistration(evt.EventId, evt.CorrelationId);
         await userRepository.SaveAsync(aggregate, ct);
 
-        // Track choreography process state
         db.ChoreographyProcessStates.Add(new ChoreographyProcessState
         {
             CorrelationId = evt.CorrelationId,

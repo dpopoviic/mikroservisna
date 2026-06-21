@@ -160,7 +160,6 @@ namespace EventPlatformAPI.UsersAPI.Domains.Aggregates
                 EventId = eventId
             });
         }
-
         private void RaiseEvent(DomainEvent @event)
         {
             Apply(@event);

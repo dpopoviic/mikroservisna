@@ -12,25 +12,19 @@ var builder = Host.CreateDefaultBuilder(args);
 
 builder.ConfigureServices((ctx, services) =>
 {
-    // ── Database ────────────────────────────────────────────────
     services.AddDbContext<SagaDbContext>(options =>
         options.UseSqlServer(ctx.Configuration.GetConnectionString("SagaConnection")));
 
-    // ── RabbitMQ options ────────────────────────────────────────
     services.Configure<SagaRabbitMqOptions>(ctx.Configuration.GetSection("RabbitMq"));
 
-    // ── Saga persistence ────────────────────────────────────────
     services.AddScoped<IRegistrationSagaStateRepository, RegistrationSagaStateRepository>();
 
-    // ── Saga coordinator ────────────────────────────────────────
     services.AddScoped<IRegistrationSagaCoordinator, RegistrationSagaCoordinator>();
 
-    // ── RabbitMQ publisher (singleton – one connection) ─────────
     services.AddSingleton<ISagaOutboxPublisher, SagaOutboxPublisher>();
 
-    // ── Background services ─────────────────────────────────────
-    services.AddHostedService<SagaConsumerHostedService>();          // inbound
-    services.AddHostedService<SagaOutboxDispatcherBackgroundService>(); // outbound
+    services.AddHostedService<SagaConsumerHostedService>();          
+    services.AddHostedService<SagaOutboxDispatcherBackgroundService>(); 
 });
 
 var host = builder.Build();

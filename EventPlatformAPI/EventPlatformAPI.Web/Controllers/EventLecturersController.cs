@@ -139,7 +139,6 @@ namespace EventPlatformAPI.Web.Controllers
                     DateTime = model.DateTime,
                     Theme = model.Theme
                 }));
-                // pitanje: da li ovde ponovo proveriti da li izabrani predavac postoji u tabeli predavaca?
                 if (!ok)
                 {
                     ModelState.AddModelError(string.Empty, "Veza za isti događaj, predavača i termin već postoji ili je unos neispravan.");

@@ -8,6 +8,5 @@ namespace EventPlatformAPI.Messages.Requests
         public Guid CorrelationId { get; set; }
         public int? LocationId { get; set; }
         public List<int> LecturerIds { get; set; } = new List<int>();
-        //potencijalno samo jedan lecturer.    
     }
 }

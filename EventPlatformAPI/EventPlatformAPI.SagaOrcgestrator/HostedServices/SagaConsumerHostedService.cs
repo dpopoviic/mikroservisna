@@ -104,8 +104,7 @@ namespace EventPlatformAPI.SagaOrcgestrator.HostedServices
                 _logger.LogError(ex,
                     "Error processing saga message. Queue={Queue} Type={Type}", queue, messageType);
 
-                // Nack without requeue to prevent infinite loop;
-                // consider a DLQ in production.
+
                 await _channel.BasicNackAsync(ea.DeliveryTag, false, false, ct);
             }
         }

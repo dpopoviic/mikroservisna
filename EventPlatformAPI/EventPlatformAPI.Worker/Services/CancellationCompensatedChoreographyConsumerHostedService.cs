@@ -96,7 +96,6 @@ public sealed class CancellationCompensatedChoreographyConsumerHostedService : B
                     "[CorrelationId={CorrelationId}] Worker: RegistrationCancellationCompensated received. EventId={EventId}",
                     evt.CorrelationId, evt.EventId);
 
-                // Write compensation notification email to file
                 var emailContent = new
                 {
                     CorrelationId = evt.CorrelationId,
@@ -121,7 +120,6 @@ public sealed class CancellationCompensatedChoreographyConsumerHostedService : B
                     "[CorrelationId={CorrelationId}] Compensation email file written: {Filename}",
                     evt.CorrelationId, fileName);
 
-                // Publish CancellationCompensationEmailSent directly to RabbitMQ
                 var sentEvent = new CancellationCompensationEmailSentEvent
                 {
                     CorrelationId = evt.CorrelationId,

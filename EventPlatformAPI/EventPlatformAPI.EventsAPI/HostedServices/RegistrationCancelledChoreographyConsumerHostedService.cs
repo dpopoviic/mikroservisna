@@ -105,7 +105,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
             "[CorrelationId={CorrelationId}] EventsAPI: RegistrationCancelledChoreographyEvent received. EventId={EventId}",
             evt.CorrelationId, evt.EventId);
 
-        // Idempotency check using ProcessedMessages
         var idempotencyKey = $"{evt.CorrelationId}:{nameof(RegistrationCancelledChoreographyEvent)}";
         var alreadyProcessed = await db.ProcessedMessages
             .AnyAsync(m => m.EventId == idempotencyKey, ct);
@@ -131,7 +130,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                     "[CorrelationId={CorrelationId}] Event {EventId} not found.",
                     evt.CorrelationId, evt.EventId);
 
-                // Event not found — still mark as processed to avoid infinite retries
                 db.ProcessedMessages.Add(new ProcessedMessage
                 {
                     EventId = idempotencyKey,
@@ -139,7 +137,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                     ProcessedAtUtc = DateTime.UtcNow
                 });
 
-                // Enqueue failure event
                 await EnqueueOutboxAsync(db, evt.CorrelationId,
                     SagaQueues.ChoreographyEventSeatReleaseFailed,
                     new EventSeatReleaseFailedEvent
@@ -165,11 +162,9 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                 return;
             }
 
-            // Release the reserved seat
             eventEntity.AvailableSeats++;
             db.Events.Update(eventEntity);
 
-            // Enqueue success event to outbox
             await EnqueueOutboxAsync(db, evt.CorrelationId,
                 SagaQueues.ChoreographyEventSeatReleased,
                 new EventSeatReleasedEvent
@@ -180,7 +175,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                     Timestamp = DateTime.UtcNow
                 }, ct);
 
-            // Mark as processed
             db.ProcessedMessages.Add(new ProcessedMessage
             {
                 EventId = idempotencyKey,
@@ -188,7 +182,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                 ProcessedAtUtc = DateTime.UtcNow
             });
 
-            // Track choreography process state
             db.ChoreographyProcessStates.Add(new ChoreographyProcessState
             {
                 CorrelationId = evt.CorrelationId,
@@ -213,7 +206,6 @@ public sealed class RegistrationCancelledChoreographyConsumerHostedService : Bac
                 "[CorrelationId={CorrelationId}] Unexpected error releasing seat for Event {EventId}.",
                 evt.CorrelationId, evt.EventId);
 
-            // Try to enqueue failure event in a new transaction
             await using var tx2 = await db.Database.BeginTransactionAsync(ct);
             await EnqueueOutboxAsync(db, evt.CorrelationId,
                 SagaQueues.ChoreographyEventSeatReleaseFailed,
